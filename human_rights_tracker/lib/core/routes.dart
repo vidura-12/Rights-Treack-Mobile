@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../features/ui/landing_page.dart';
-import '../features/auth/login_page.dart';
+import '../features/auth/screens/login_page.dart';
 
 class AppRoutes {
   static const String landing = '/';
