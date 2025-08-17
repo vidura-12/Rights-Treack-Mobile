@@ -7,7 +7,7 @@ class LandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.indigo[900],
+      backgroundColor: Color.fromARGB(255, 5, 19, 56),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -30,7 +30,7 @@ class LandingPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-                child: const Text('Login', style: TextStyle(color: Colors.indigo)),
+                child: const Text('Login', style: TextStyle(color: Color.fromARGB(255, 5, 19, 56))),
               ),
             ],
           ),
