@@ -1,4 +1,13 @@
+// lib/features/auth/login_page.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:human_rights_tracker/core/routes.dart';
+import 'package:human_rights_tracker/services/auth_service.dart';
+
+final AuthService _authService = AuthService();
+final TextEditingController _emailController = TextEditingController();
+final TextEditingController _passwordController = TextEditingController();
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -181,11 +190,24 @@ class _LoginPageState extends State<LoginPage> {
                               color: const Color(0xFF718096),
                               size: 20,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
+                            onPressed: _agreedToTerms ? () async {
+                              if (_emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+                                User? user = await _authService.signInWithEmailAndPassword(
+                                  _emailController.text,
+                                  _passwordController.text,
+                                );
+                                
+                                if (user != null) {
+                                  // Navigate to home screen
+                                  Navigator.pushReplacementNamed(context, AppRoutes.landing);
+                                } else {
+                                  // Show error message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Login failed. Please check your credentials.')),
+                                  );
+                                }
+                              }
+                            } : null,
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
@@ -321,7 +343,9 @@ class _LoginPageState extends State<LoginPage> {
                             const TextSpan(text: "Don't have an account? "),
                             WidgetSpan(
                               child: GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.pushNamed(context, AppRoutes.signup);
+                                },
                                 child: const Text(
                                   'Sign Up Here',
                                   style: TextStyle(
