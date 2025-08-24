@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1053000782693",
+    "project_id": "human-rights-tracker-5822f",
+    "storage_bucket": "human-rights-tracker-5822f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1053000782693:android:fe8d45087bcda6c340878c",
+        "android_client_info": {
+          "package_name": "com.example.human_rights_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6nCKIfn7Wb25V3WLaTSzYCzSa1kXVSdA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
