@@ -29,6 +29,12 @@ class _HomePageState extends State<HomePage> {
         iconTheme: const IconThemeData( // 👈 this controls the hamburger icon color
         color:  Color.fromARGB(255, 204, 204, 204),  // change to whatever color you want
         ),
+          actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications, color: Colors.white),
+          onPressed: () {},
+        ),        
+      ],
         title: Flexible( // ✅ prevents overflow
           child: Row(
             children: [
@@ -55,13 +61,6 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-  actions: [
-    IconButton(
-      icon: const Icon(Icons.notifications, color: Colors.white),
-      onPressed: () {},
-    ),
-    
-  ],
 ),
 
       drawer: _buildSidebar(), // ✅ keep sidebar as Drawer only
