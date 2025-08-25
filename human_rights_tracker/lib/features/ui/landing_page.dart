@@ -10,9 +10,9 @@ class LandingPage extends StatefulWidget {
 
 class _LandingPageState extends State<LandingPage> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _rippleAnimation;
 
   @override
   void initState() {
@@ -21,11 +21,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
     // Initialize animations
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+      duration: const Duration(milliseconds: 4000),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -33,15 +29,22 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
+      begin: const Offset(0, 0.3),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _rippleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 1.0, curve: Curves.easeInOut),
+      ),
+    );
 
     // Start animations
     _controller.forward();
 
-    // Auto-navigate after 2.5 seconds
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    // Auto-navigate after 3.5 seconds
+    Future.delayed(const Duration(milliseconds: 3500), () {
       Navigator.pushReplacementNamed(context, AppRoutes.login);
     });
   }
@@ -68,102 +71,151 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
             ],
           ),
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Animated Icon
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
-                    ),
-                    child: Icon(
-                      Icons.gavel,
-                      size: 60,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 30),
-                
-                // Animated Title
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: const Text(
-                      'RightsTrack',
-                      style: TextStyle(
-                        fontSize: 42,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 15),
-                
-                // Animated Subtitle
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: const Text(
-                      'Justice Starts With Awareness',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: 1.1,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 40),
-                
-                // Loading indicator with countdown
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          strokeWidth: 2,
-                          backgroundColor: Colors.white.withOpacity(0.2),
+        child: Stack(
+          children: [
+            // Main content centered
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Animated Title
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: const Text(
+                          'RightsTrack',
+                          style: TextStyle(
+                            fontSize: 48,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2.0,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 10.0,
+                                color: Colors.black54,
+                                offset: Offset(2.0, 2.0),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Loading...',
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 14,
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Animated Subtitle
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: const Text(
+                          'Justice Starts With Awareness',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 1.5,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+            
+            // Ink drop animation at the bottom
+            Positioned(
+              bottom: 50,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: AnimatedBuilder(
+                  animation: _rippleAnimation,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: InkDropPainter(_rippleAnimation.value),
+                      size: const Size(100, 100),
+                    );
+                  },
+                ),
+              ),
+            ),
+            
+            // Loading text at the bottom
+            Positioned(
+              bottom: 20,
+              left: 0,
+              right: 0,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: const Text(
+                  'Loading...',
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 14,
+                    letterSpacing: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+}
+
+class InkDropPainter extends CustomPainter {
+  final double animationValue;
+
+  InkDropPainter(this.animationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final maxRadius = size.width / 2;
+    
+    // Main drop
+    final mainPaint = Paint()
+      ..color = Colors.white.withOpacity(0.8)
+      ..style = PaintingStyle.fill;
+    
+    // Ripple circles
+    final ripplePaint = Paint()
+      ..color = Colors.white.withOpacity(0.3 - (animationValue * 0.3))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    
+    // Draw main drop
+    canvas.drawCircle(center, maxRadius * 0.4, mainPaint);
+    
+    // Draw ripples
+    for (int i = 0; i < 3; i++) {
+      final rippleProgress = (animationValue - (i * 0.2)).clamp(0.0, 1.0);
+      if (rippleProgress > 0) {
+        final radius = maxRadius * 0.4 + (maxRadius * 0.6 * rippleProgress);
+        canvas.drawCircle(center, radius, ripplePaint);
+      }
+    }
+    
+    // Draw splash effect
+    final splashPaint = Paint()
+      ..color = Colors.white.withOpacity(0.2 * (1 - animationValue))
+      ..style = PaintingStyle.fill;
+    
+    final splashRadius = maxRadius * (0.5 + animationValue * 0.5);
+    canvas.drawCircle(center, splashRadius, splashPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant InkDropPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
   }
 }
