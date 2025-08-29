@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import '../features/ui/landing_page.dart';
 import '../features/auth/login_page.dart';
 import '../features/auth/SignUpPage.dart';
-
+import '../features/ui/HomePage.dart';
 class AppRoutes {
   static const String landing = '/';
   static const String login = '/login';
   static const String signup = '/signup';
+  static const String home = '/home';
   // Add other routes as needed
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -17,6 +18,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const LoginPage());
       case signup:
         return MaterialPageRoute(builder: (_) => const SignUpPage());
+      case home:
+        return MaterialPageRoute(builder: (_) => const HomePage());  
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

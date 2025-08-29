@@ -8,29 +8,52 @@ final AuthService _authService = AuthService();
 final TextEditingController _emailController = TextEditingController();
 final TextEditingController _passwordController = TextEditingController();
 
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
+
+  
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final bool _isPasswordVisible = false;
+  bool _isPasswordVisible = false; // <-- make it mutable
   bool _agreedToTerms = false;
+
+  Future<void> _login() async {
+    if (_emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+      User? user = await _authService.signInWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+
+      if (user != null) {
+        // Navigate to home/landing screen
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login failed. Please check your credentials.')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter email and password.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1628), // Dark blue background
+      backgroundColor: const Color(0xFF0A1628),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
               const SizedBox(height: 60),
 
-              // Logo and branding
+              // Logo + Branding
               Column(
                 children: [
                   Row(
@@ -50,7 +73,7 @@ class _LoginPageState extends State<LoginPage> {
                         width: 40,
                         height: 40,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFE53E3E), // Red accent
+                          color: Color(0xFFE53E3E),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -75,10 +98,10 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 80),
 
-              // White login container
+              // White container
               Container(
                 width: double.infinity,
-                margin: const EdgeInsets.only(top: 24), // Keep top spacing
+                margin: const EdgeInsets.only(top: 24),
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
                 decoration: const BoxDecoration(
                   color: Colors.white,
@@ -108,7 +131,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 32),
 
-                    // Email Address Field
+                    // Email Field
                     const Text(
                       'Email Address',
                       style: TextStyle(
@@ -128,19 +151,21 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       child: TextField(
-                        decoration: InputDecoration(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
                           hintText: 'E-mail Address',
-                          hintStyle: const TextStyle(
+                          hintStyle: TextStyle(
                             color: Color(0xFFA0AEC0),
                             fontSize: 16,
                           ),
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.email_outlined,
                             color: Color(0xFF718096),
                             size: 20,
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
+                          contentPadding: EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 16,
                           ),
@@ -170,6 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       child: TextField(
+                        controller: _passwordController,
                         obscureText: !_isPasswordVisible,
                         decoration: InputDecoration(
                           hintText: 'Password',
@@ -190,24 +216,11 @@ class _LoginPageState extends State<LoginPage> {
                               color: const Color(0xFF718096),
                               size: 20,
                             ),
-                            onPressed: _agreedToTerms ? () async {
-                              if (_emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
-                                User? user = await _authService.signInWithEmailAndPassword(
-                                  _emailController.text,
-                                  _passwordController.text,
-                                );
-                                
-                                if (user != null) {
-                                  // Navigate to home screen
-                                  Navigator.pushReplacementNamed(context, AppRoutes.landing);
-                                } else {
-                                  // Show error message
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Login failed. Please check your credentials.')),
-                                  );
-                                }
-                              }
-                            } : null,
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
@@ -224,7 +237,9 @@ class _LoginPageState extends State<LoginPage> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          // TODO: implement reset password
+                        },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
@@ -242,7 +257,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 24),
 
-                    // Terms and Privacy Agreement
+                    // Terms
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -301,12 +316,12 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 32),
 
-                    // Login Button
+                    // Login Button (FIXED)
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: _agreedToTerms ? () {} : null,
+                        onPressed: _agreedToTerms ? _login : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _agreedToTerms
                               ? const Color(0xFF2D3748)
