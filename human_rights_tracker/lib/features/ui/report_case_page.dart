@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../Services/auth_service.dart'; // ✅ Import your AuthService
 
 class ReportCasePage extends StatefulWidget {
   const ReportCasePage({super.key});
@@ -13,20 +15,26 @@ class _ReportCasePageState extends State<ReportCasePage> {
   // Controllers
   final TextEditingController caseNumberController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
-  final TextEditingController victimGenderController = TextEditingController();
-  final TextEditingController abuserGenderController = TextEditingController();
 
   String? category;
+  String? victimGender;
+  String? abuserGender;
   DateTime? fromDate;
   DateTime? toDate;
 
   final List<String> categories = [
-    'Police Brutality',
-    'Discrimination',
-    'Freedom of Speech',
-    'Unlawful Detention',
-    'Others'
+    'Human Trafficking',
+    'Gender-Based Violence',
+    'Child Abuse',
+    'Sextortion',
+    'Rape',
+    'Domestic Abuse',
+    'Jungle Justice',
+    'Other Abuses'
   ];
+
+  final List<String> victims = ['Male', 'Female', 'Prefer not to Say'];
+  final List<String> abusers = ['Male', 'Female', 'Prefer not to Say'];
 
   Future<void> _pickDate({required bool isFromDate}) async {
     DateTime initialDate = DateTime.now();
@@ -47,20 +55,53 @@ class _ReportCasePageState extends State<ReportCasePage> {
     }
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // Right now, only showing data in console (in-memory)
-      print("Case Number: ${caseNumberController.text}");
-      print("Category: $category");
-      print("Location: ${locationController.text}");
-      print("Victim Gender: ${victimGenderController.text}");
-      print("Abuser Gender: ${abuserGenderController.text}");
-      print("From Date: $fromDate");
-      print("To Date: $toDate");
+  // 🔥 Save to Firebase Firestore
+  void _submitForm() async {
+    final user = AuthService().currentUser; // ✅ Use AuthService
 
+    if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Case reported successfully (in-memory)!')),
+        const SnackBar(content: Text("You must be logged in to report a case.")),
       );
+      return; // Stop submission if no user
+    }
+
+    if (_formKey.currentState!.validate()) {
+      try {
+        final caseData = {
+          "caseNumber": caseNumberController.text,
+          "category": category,
+          "location": locationController.text,
+          "victimGender": victimGender,
+          "abuserGender": abuserGender,
+          "fromDate": fromDate?.toIso8601String(),
+          "toDate": toDate?.toIso8601String(),
+          "createdAt": FieldValue.serverTimestamp(),
+          "reportedBy": user.uid, // ✅ Track who reported
+        };
+
+        await FirebaseFirestore.instance.collection("cases").add(caseData);
+
+        // ✅ Success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Case reported successfully!")),
+        );
+
+        // Reset form after save
+        caseNumberController.clear();
+        locationController.clear();
+        setState(() {
+          category = null;
+          victimGender = null;
+          abuserGender = null;
+          fromDate = null;
+          toDate = null;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to save case: $e")),
+        );
+      }
     }
   }
 
@@ -85,7 +126,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter case number' : null,
+                value == null || value.isEmpty ? 'Enter case number' : null,
               ),
               const SizedBox(height: 16),
 
@@ -94,9 +135,9 @@ class _ReportCasePageState extends State<ReportCasePage> {
                 value: category,
                 items: categories
                     .map((cat) => DropdownMenuItem(
-                          value: cat,
-                          child: Text(cat),
-                        ))
+                  value: cat,
+                  child: Text(cat),
+                ))
                     .toList(),
                 onChanged: (val) => setState(() => category = val),
                 decoration: const InputDecoration(
@@ -104,7 +145,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
-                    value == null ? 'Select a category' : null,
+                value == null ? 'Select a category' : null,
               ),
               const SizedBox(height: 16),
 
@@ -116,27 +157,45 @@ class _ReportCasePageState extends State<ReportCasePage> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter location' : null,
+                value == null || value.isEmpty ? 'Enter location' : null,
               ),
               const SizedBox(height: 16),
 
-              // Victim Gender
-              TextFormField(
-                controller: victimGenderController,
+              // Victim Gender Dropdown
+              DropdownButtonFormField<String>(
+                value: victimGender,
+                items: victims
+                    .map((v) => DropdownMenuItem(
+                  value: v,
+                  child: Text(v),
+                ))
+                    .toList(),
+                onChanged: (val) => setState(() => victimGender = val),
                 decoration: const InputDecoration(
                   labelText: 'Victim Gender',
                   border: OutlineInputBorder(),
                 ),
+                validator: (value) =>
+                value == null ? 'Select victim gender' : null,
               ),
               const SizedBox(height: 16),
 
-              // Abuser Gender
-              TextFormField(
-                controller: abuserGenderController,
+              // Abuser Gender Dropdown
+              DropdownButtonFormField<String>(
+                value: abuserGender,
+                items: abusers
+                    .map((a) => DropdownMenuItem(
+                  value: a,
+                  child: Text(a),
+                ))
+                    .toList(),
+                onChanged: (val) => setState(() => abuserGender = val),
                 decoration: const InputDecoration(
                   labelText: 'Abuser Gender',
                   border: OutlineInputBorder(),
                 ),
+                validator: (value) =>
+                value == null ? 'Select abuser gender' : null,
               ),
               const SizedBox(height: 16),
 
