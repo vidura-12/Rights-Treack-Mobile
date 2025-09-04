@@ -3,12 +3,13 @@ import '../features/ui/landing_page.dart';
 import '../features/auth/login_page.dart';
 import '../features/auth/SignUpPage.dart';
 import '../features/ui/HomePage.dart';
+import '../features/ui/text.dart';
 class AppRoutes {
   static const String landing = '/';
   static const String login = '/login';
   static const String signup = '/signup';
   static const String home = '/home';
-  // Add other routes as needed
+  static const String support = '/support'; // User Support page
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -19,12 +20,14 @@ class AppRoutes {
       case signup:
         return MaterialPageRoute(builder: (_) => const SignUpPage());
       case home:
-        return MaterialPageRoute(builder: (_) => const HomePage());  
+        return MaterialPageRoute(builder: (_) => const HomePage());
+      case support:
+        return MaterialPageRoute(builder: (_) => const UserSupportPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
             body: Center(
-              child: Text('No route defined for ${settings.name}'),
+              child: Text('No route defined for [0m${settings.name}[0m'),
             ),
           ),
         );

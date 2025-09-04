@@ -244,6 +244,9 @@ Widget _buildSidebar() {
         setState(() {
           _currentIndex = index;
         });
+        if (index == 3) {
+          Navigator.pushNamed(context, AppRoutes.support);
+        }
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

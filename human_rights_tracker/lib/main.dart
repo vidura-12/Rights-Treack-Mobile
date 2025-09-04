@@ -28,25 +28,20 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      // Remove initialRoute and use StreamBuilder to auto-check login
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          // While checking auth state
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          // If user is logged in
-          if (snapshot.hasData) {
-            return const HomePage();
-          }
-          // If user is NOT logged in
-          return const LandingPage();
-        },
-      ),
-      onGenerateRoute: AppRoutes.generateRoute,
+      initialRoute: '/',
+      onGenerateRoute: (settings) {
+        // If user is not logged in, always show landing/login/signup
+        if (settings.name == AppRoutes.landing || settings.name == AppRoutes.login || settings.name == AppRoutes.signup) {
+          return AppRoutes.generateRoute(settings);
+        }
+        // For all other routes, check auth
+        if (FirebaseAuth.instance.currentUser == null) {
+          // Not logged in, redirect to login
+          return AppRoutes.generateRoute(const RouteSettings(name: AppRoutes.login));
+        }
+        // Logged in, allow navigation
+        return AppRoutes.generateRoute(settings);
+      },
     );
   }
 }
