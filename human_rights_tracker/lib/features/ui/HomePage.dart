@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:human_rights_tracker/core/routes.dart';
-import 'package:human_rights_tracker/widgets/app_footer.dart';
+//import 'package:human_rights_tracker/widgets/app_footer.dart';
 import 'report_case_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -126,7 +126,7 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: _pages[_currentIndex],
               ),
-              const AppFooter(),
+             
             ],
           ),
           if (_showNotifications) _buildNotificationsPanel(),
