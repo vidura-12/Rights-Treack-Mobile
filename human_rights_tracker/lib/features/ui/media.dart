@@ -13,9 +13,9 @@ class MediaPage extends StatefulWidget {
 }
 
 class Post {
-  final List<String>? paths; // mobile/desktop file paths
-  final List<Uint8List>? bytes; // web file data
-  final List<String>? imageUrls; // network images
+  final List<String>? paths;
+  final List<Uint8List>? bytes;
+  final List<String>? imageUrls;
   final String description;
   final String userName;
   final String userAvatar;
@@ -37,6 +37,7 @@ class Post {
 class _MediaPageState extends State<MediaPage> {
   final TextEditingController _descController = TextEditingController();
   final List<Post> _posts = [];
+  final Map<Post, TextEditingController> _commentControllers = {}; // controller per post
 
   List<String>? _selectedPaths;
   List<Uint8List>? _pickedBytes;
@@ -45,24 +46,22 @@ class _MediaPageState extends State<MediaPage> {
 
   final String currentUser = "You";
   final String currentUserAvatar =
-      "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // simple clipart
+      "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
   @override
   void initState() {
     super.initState();
-    // Add dummy post with network image
-    _posts.add(
-      Post(
-        description:
-            "Observed child labor in a factory in Colombo. Immediate action needed!",
-        userName: "Kamal Perera",
-        userAvatar: "https://randomuser.me/api/portraits/men/32.jpg",
-        comments: ["We should report this to authorities.", "Awful! Thanks for sharing."],
-        imageUrls: [
-          "https://images.unsplash.com/photo-1581093588401-57f1d338ea7f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMjA3fDB8MXxzZWFyY2h8MXx8Y2hpbGQlMjBsYWJvcnxlbnwwfHx8fDE2OTMxOTg4Njk&ixlib=rb-4.0.3&q=80&w=400"
-        ],
-      ),
+    // Add dummy post
+    final dummyPost = Post(
+      description:
+          "Observed child labor in a factory in Colombo. Immediate action needed!",
+      userName: "Kamal Perera",
+      userAvatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png", // clipart avatar
+      comments: ["We should report this to authorities.", "Awful! Thanks for sharing."],
+      imageUrls: ["https://picsum.photos/400/200"],
     );
+    _posts.add(dummyPost);
+    _commentControllers[dummyPost] = TextEditingController();
   }
 
   Future<void> _pickMedia() async {
@@ -92,17 +91,16 @@ class _MediaPageState extends State<MediaPage> {
     if ((_selectedPaths != null && _selectedPaths!.isNotEmpty) ||
         (_pickedBytes != null && _pickedBytes!.isNotEmpty) ||
         _descController.text.isNotEmpty) {
+      final newPost = Post(
+        paths: _selectedPaths,
+        bytes: _pickedBytes,
+        description: _descController.text,
+        userName: currentUser,
+        userAvatar: currentUserAvatar,
+      );
       setState(() {
-        _posts.insert(
-          0,
-          Post(
-            paths: _selectedPaths,
-            bytes: _pickedBytes,
-            description: _descController.text,
-            userName: currentUser,
-            userAvatar: currentUserAvatar,
-          ),
-        );
+        _posts.insert(0, newPost);
+        _commentControllers[newPost] = TextEditingController();
         _descController.clear();
         _selectedPaths = null;
         _pickedBytes = null;
@@ -127,9 +125,6 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   Widget _buildImages(Post post) {
-    final images = kIsWeb ? post.bytes : post.paths;
-
-    // If there are network images in dummy post, use them
     if (post.imageUrls != null && post.imageUrls!.isNotEmpty) {
       return SizedBox(
         height: 200,
@@ -147,6 +142,7 @@ class _MediaPageState extends State<MediaPage> {
       );
     }
 
+    final images = kIsWeb ? post.bytes : post.paths;
     if (images == null || images.isEmpty) return const SizedBox.shrink();
 
     List<Widget> imageWidgets = [];
@@ -200,8 +196,25 @@ class _MediaPageState extends State<MediaPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Human Rights Cases', style: TextStyle(color: Colors.white)),
         backgroundColor: darkBlue,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              "Media on Human Rights Abuses",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+            SizedBox(height: 4),
+            Text(
+              "Bringing hidden violations to light through reliable media coverage.",
+              style: TextStyle(
+                color: Colors.white70,
+                fontStyle: FontStyle.italic,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
       body: Container(
         color: Colors.white,
@@ -275,8 +288,9 @@ class _MediaPageState extends State<MediaPage> {
                       itemCount: _posts.length,
                       itemBuilder: (context, index) {
                         final post = _posts[index];
-                        final commentController = TextEditingController();
                         bool showComments = false;
+                        final commentController =
+                            _commentControllers[post] ??= TextEditingController();
 
                         return StatefulBuilder(
                           builder: (context, setInnerState) {
@@ -289,7 +303,6 @@ class _MediaPageState extends State<MediaPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // User info
                                     Row(
                                       children: [
                                         CircleAvatar(
