@@ -5,6 +5,8 @@ import 'firebase_options.dart'; // Firebase options
 import 'core/routes.dart';
 import 'features/ui/landing_page.dart';
 import 'features/ui/HomePage.dart';
+import 'features/ui/report_case_page.dart';
+import 'features/ui/case_list_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +46,8 @@ class MyApp extends StatelessWidget {
           }
           // If user is NOT logged in
           return const LandingPage();
+          return const ReportCasePage();
+          return const CaseListPage();
         },
       ),
       onGenerateRoute: AppRoutes.generateRoute,
