@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage> {
               if (_unreadNotifications > 0)
                 Positioned(
                   right: 8,
-                  top: 8,
+                  top: 3,
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
@@ -138,8 +138,8 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildNotificationsPanel() {
     return Positioned(
-      top: kToolbarHeight,
-      right: 16,
+      top: 3,
+      right: 18,
       width: MediaQuery.of(context).size.width * 0.8,
       child: Material(
         elevation: 8,
