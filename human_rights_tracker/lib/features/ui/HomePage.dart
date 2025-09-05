@@ -174,6 +174,11 @@ Widget _buildSidebar() {
           _currentIndex = index;
         });
         Navigator.pop(context); // close drawer
+        // Navigate to Media page if Media is tapped
+        if (title == 'Media') {
+          Navigator.pushNamed(context, AppRoutes.media);
+        }
+        // ...you can add similar navigation for other sidebar items if needed...
       },
     );
   }
@@ -192,18 +197,27 @@ Widget _buildSidebar() {
           _buildFeatureTile('Directory', Icons.contacts, const Color(0xFF38A169)),
           _buildFeatureTile('Talk', Icons.chat, const Color(0xFFD69E2E)),
           _buildFeatureTile('Courses', Icons.school, const Color(0xFF805AD5)),
-          _buildFeatureTile('Media', Icons.photo_library, const Color(0xFFDD6B20)),
+          // Pass onTap only for Media tile
+          _buildFeatureTile(
+            'Media',
+            Icons.photo_library,
+            const Color(0xFFDD6B20),
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.media);
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureTile(String title, IconData icon, Color color) {
+  // Update _buildFeatureTile to accept an optional onTap callback
+  Widget _buildFeatureTile(String title, IconData icon, Color color, {VoidCallback? onTap}) {
     return Card(
       color: const Color(0xFF1A243A),
       elevation: 4,
       child: InkWell(
-        onTap: () {
+        onTap: onTap ?? () {
           print('$title tapped');
         },
         child: Center(
@@ -244,6 +258,11 @@ Widget _buildSidebar() {
         setState(() {
           _currentIndex = index;
         });
+        // Navigate to Media page if Media is tapped
+        if (index == 4) {
+          Navigator.pushNamed(context, AppRoutes.media);
+        }
+        // ...you can add similar navigation for other bottom nav items if needed...
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

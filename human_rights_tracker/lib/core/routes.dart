@@ -3,11 +3,14 @@ import '../features/ui/landing_page.dart';
 import '../features/auth/login_page.dart';
 import '../features/auth/SignUpPage.dart';
 import '../features/ui/HomePage.dart';
+import '../features/ui/media.dart';
+
 class AppRoutes {
   static const String landing = '/';
   static const String login = '/login';
   static const String signup = '/signup';
   static const String home = '/home';
+  static const String media = '/media';
   // Add other routes as needed
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -19,7 +22,9 @@ class AppRoutes {
       case signup:
         return MaterialPageRoute(builder: (_) => const SignUpPage());
       case home:
-        return MaterialPageRoute(builder: (_) => const HomePage());  
+        return MaterialPageRoute(builder: (_) => const HomePage());
+      case media:
+        return MaterialPageRoute(builder: (_) => const MediaPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
