@@ -5,6 +5,8 @@ import 'firebase_options.dart'; // Firebase options
 import 'core/routes.dart';
 import 'features/ui/landing_page.dart';
 import 'features/ui/HomePage.dart';
+import 'features/ui/report_case_page.dart';
+import 'features/ui/case_list_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +44,27 @@ class MyApp extends StatelessWidget {
         // Logged in, allow navigation
         return AppRoutes.generateRoute(settings);
       },
+      // Remove initialRoute and use StreamBuilder to auto-check login
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          // While checking auth state
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          // If user is logged in
+          if (snapshot.hasData) {
+            return const HomePage();
+          }
+          // If user is NOT logged in
+          return const LandingPage();
+          return const ReportCasePage();
+          return const CaseListPage();
+        },
+      ),
+      onGenerateRoute: AppRoutes.generateRoute,
     );
   }
 }

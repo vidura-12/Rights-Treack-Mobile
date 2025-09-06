@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:human_rights_tracker/core/routes.dart';
+import 'report_case_page.dart'; // Make sure this path is correct
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,19 +27,17 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A1628),
         elevation: 0,
-        iconTheme: const IconThemeData( // 👈 this controls the hamburger icon color
-        color:  Color.fromARGB(255, 204, 204, 204),  // change to whatever color you want
-        ),
-          actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications, color: Colors.white),
-          onPressed: () {},
-        ),        
-      ],
-        title: Flexible( // ✅ prevents overflow
+        iconTheme: const IconThemeData(color: Color.fromARGB(255, 204, 204, 204)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {},
+          ),
+        ],
+        title: Flexible(
           child: Row(
             children: [
-              Text(
+              const Text(
                 'RightsTrack',
                 style: TextStyle(
                   color: Colors.white,
@@ -47,13 +46,13 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded( // ✅ allows wrapping if too long
+              Expanded(
                 child: Text(
                   'Justice Starts With Awareness',
                   style: TextStyle(
-                    color: Colors.grey,
+                    color: Colors.grey[400],
                     fontSize: 12,
-                    overflow: TextOverflow.ellipsis, // ✅ prevents overflow error
+                    overflow: TextOverflow.ellipsis,
                   ),
                   maxLines: 1,
                 ),
@@ -61,108 +60,106 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-),
-
-      drawer: _buildSidebar(), // ✅ keep sidebar as Drawer only
-      body: _buildMainContent(), // ✅ Home content only here
+      ),
+      drawer: _buildSidebar(),
+      body: _buildMainContent(),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-Widget _buildSidebar() {
-  return Drawer(
-    backgroundColor: const Color(0xFF1A243A),
-    child: SafeArea( // ✅ Prevent overflow at top and bottom
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Profile header
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    color: const Color(0xFF2D3748),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Color(0xFFE53E3E),
-                          child: Icon(Icons.person, color: Colors.white, size: 30),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Vidura NirmaI',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+  Widget _buildSidebar() {
+    return Drawer(
+      backgroundColor: const Color(0xFF1A243A),
+      child: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile header
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      color: const Color(0xFF2D3748),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const CircleAvatar(
+                            radius: 30,
+                            backgroundColor: Color(0xFFE53E3E),
+                            child: Icon(Icons.person, color: Colors.white, size: 30),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'viduranirmai@gmail.com',
-                          style: TextStyle(color: Colors.grey, fontSize: 14),
-                        ),
-                        const SizedBox(height: 16),
-                        Divider(color: Colors.grey[700]),
-                      ],
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Vidura NirmaI',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'viduranirmai@gmail.com',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                          const SizedBox(height: 16),
+                          Divider(color: Colors.grey[700]),
+                        ],
+                      ),
                     ),
-                  ),
-                  // Menu items
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Column(
-                      children: [
-                        _buildSidebarItem(0, Icons.home, 'Home'),
-                        _buildSidebarItem(1, Icons.person, 'Profile'),
-                        _buildSidebarItem(2, Icons.photo_library, 'Media'),
-                        _buildSidebarItem(3, Icons.contacts, 'Directory'),
-                        _buildSidebarItem(4, Icons.track_changes, 'Case Tracker'),
-                        _buildSidebarItem(5, Icons.people, 'Supporters'),
-                        _buildSidebarItem(6, Icons.info, 'About Us'),
-                        _buildSidebarItem(7, Icons.contact_mail, 'Contact Us'),
-                        _buildSidebarItem(8, Icons.privacy_tip, 'Privacy Policy'),
-                        _buildSidebarItem(9, Icons.help, 'FAQ'),
-                      ],
+                    // Menu items
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Column(
+                        children: [
+                          _buildSidebarItem(0, Icons.home, 'Home'),
+                          _buildSidebarItem(1, Icons.person, 'Profile'),
+                          _buildSidebarItem(2, Icons.photo_library, 'Media'),
+                          _buildSidebarItem(3, Icons.contacts, 'Directory'),
+                          _buildSidebarItem(4, Icons.track_changes, 'Case Tracker'),
+                          _buildSidebarItem(5, Icons.people, 'Supporters'),
+                          _buildSidebarItem(6, Icons.info, 'About Us'),
+                          _buildSidebarItem(7, Icons.contact_mail, 'Contact Us'),
+                          _buildSidebarItem(8, Icons.privacy_tip, 'Privacy Policy'),
+                          _buildSidebarItem(9, Icons.help, 'FAQ'),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          // Logout button at bottom
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: IconButton(
-              icon: const Icon(Icons.logout, color: Colors.white),
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.pushReplacementNamed(context, AppRoutes.login);
-              },
+            // Logout button at bottom
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: IconButton(
+                icon: const Icon(Icons.logout, color: Colors.white),
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushReplacementNamed(context, AppRoutes.login);
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildSidebarItem(int index, IconData icon, String title) {
     return ListTile(
-      leading: Icon(icon,
-          color:
-              _sidebarSelections[index] ? const Color(0xFFE53E3E) : Colors.grey),
+      leading: Icon(
+        icon,
+        color: _sidebarSelections[index] ? const Color(0xFFE53E3E) : Colors.grey,
+      ),
       title: Text(
         title,
         style: TextStyle(
-          color:
-              _sidebarSelections[index] ? const Color(0xFFE53E3E) : Colors.white,
-          fontWeight:
-              _sidebarSelections[index] ? FontWeight.bold : FontWeight.normal,
+          color: _sidebarSelections[index] ? const Color(0xFFE53E3E) : Colors.white,
+          fontWeight: _sidebarSelections[index] ? FontWeight.bold : FontWeight.normal,
         ),
       ),
       selected: _sidebarSelections[index],
@@ -174,6 +171,14 @@ Widget _buildSidebar() {
           _currentIndex = index;
         });
         Navigator.pop(context); // close drawer
+
+        // Navigate to ReportCasePage when Case Tracker is tapped
+        if (index == 4) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ReportCasePage()),
+          );
+        }
       },
     );
   }
@@ -204,6 +209,13 @@ Widget _buildSidebar() {
       elevation: 4,
       child: InkWell(
         onTap: () {
+          // Navigate to ReportCasePage if Case Tracker or Report Abuse
+          if (title == 'Case Tracker' || title == 'Report Abuse') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ReportCasePage()),
+            );
+          }
           print('$title tapped');
         },
         child: Center(
