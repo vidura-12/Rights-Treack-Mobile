@@ -30,21 +30,6 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      onGenerateRoute: (settings) {
-        // If user is not logged in, always show landing/login/signup
-        if (settings.name == AppRoutes.landing || settings.name == AppRoutes.login || settings.name == AppRoutes.signup) {
-          return AppRoutes.generateRoute(settings);
-        }
-        // For all other routes, check auth
-        if (FirebaseAuth.instance.currentUser == null) {
-          // Not logged in, redirect to login
-          return AppRoutes.generateRoute(const RouteSettings(name: AppRoutes.login));
-        }
-        // Logged in, allow navigation
-        return AppRoutes.generateRoute(settings);
-      },
-      // Remove initialRoute and use StreamBuilder to auto-check login
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
@@ -60,11 +45,24 @@ class MyApp extends StatelessWidget {
           }
           // If user is NOT logged in
           return const LandingPage();
-          return const ReportCasePage();
-          return const CaseListPage();
         },
       ),
-      onGenerateRoute: AppRoutes.generateRoute,
+      onGenerateRoute: (settings) {
+        // If user is not logged in, always show landing/login/signup
+        if (settings.name == AppRoutes.landing || 
+            settings.name == AppRoutes.login || 
+            settings.name == AppRoutes.signup) {
+          return AppRoutes.generateRoute(settings);
+        }
+        // For all other routes, check auth
+        if (FirebaseAuth.instance.currentUser == null) {
+          // Not logged in, redirect to login
+          return AppRoutes.generateRoute(const RouteSettings(name: AppRoutes.login));
+        }
+        // Logged in, allow navigation
+        return AppRoutes.generateRoute(settings);
+      },
     );
   }
 }
+
