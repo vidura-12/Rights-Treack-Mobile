@@ -5,6 +5,8 @@ import 'firebase_options.dart'; // Firebase options
 import 'core/routes.dart';
 import 'features/ui/landing_page.dart';
 import 'features/ui/HomePage.dart';
+import 'features/ui/report_case_page.dart';
+import 'features/ui/case_list_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +30,6 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      // Remove initialRoute and use StreamBuilder to auto-check login
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
@@ -46,7 +47,22 @@ class MyApp extends StatelessWidget {
           return const LandingPage();
         },
       ),
-      onGenerateRoute: AppRoutes.generateRoute,
+      onGenerateRoute: (settings) {
+        // If user is not logged in, always show landing/login/signup
+        if (settings.name == AppRoutes.landing || 
+            settings.name == AppRoutes.login || 
+            settings.name == AppRoutes.signup) {
+          return AppRoutes.generateRoute(settings);
+        }
+        // For all other routes, check auth
+        if (FirebaseAuth.instance.currentUser == null) {
+          // Not logged in, redirect to login
+          return AppRoutes.generateRoute(const RouteSettings(name: AppRoutes.login));
+        }
+        // Logged in, allow navigation
+        return AppRoutes.generateRoute(settings);
+      },
     );
   }
 }
+

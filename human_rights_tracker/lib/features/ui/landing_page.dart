@@ -24,7 +24,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       statusBarBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xFF030A23),
+      systemNavigationBarColor: Color(0xFF0A1628),
       systemNavigationBarIconBrightness: Brightness.light,
     ));
 
@@ -72,9 +72,9 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF0A1F4D),
-              Color(0xFF051338),
-              Color(0xFF030A23),
+              Color(0xFF0A1628),
+              Color(0xFF0A1628),
+              Color(0xFF0A1628),
             ],
           ),
         ),
@@ -97,24 +97,14 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                         shadows: [
                           Shadow(
                             blurRadius: 10.0,
-                            color: Colors.black54,
+                            color: Color(0xFF0A1628),
                             offset: Offset(2.0, 2.0),
                           ),
                         ],
                       ),
                     ),
                     SizedBox(height: 20),
-                    Text(
-                      'Justice Starts With Awareness',
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: 1.5,
-                        fontStyle: FontStyle.italic,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    
                   ],
                 ),
               ),
