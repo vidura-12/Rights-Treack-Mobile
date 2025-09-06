@@ -379,6 +379,11 @@ class _HomePageState extends State<HomePage> {
           _currentIndex = 0; // Reset to home when using sidebar
         });
         Navigator.pop(context); // close drawer
+        // Navigate to Media page if Media is tapped
+        if (title == 'Media') {
+          Navigator.pushNamed(context, AppRoutes.media);
+        }
+        // ...you can add similar navigation for other sidebar items if needed...
 
         // Navigate to ReportCasePage when Case Tracker is tapped
         if (index == 4) {
@@ -430,19 +435,28 @@ class HomeContent extends StatelessWidget {
         mainAxisSpacing: 16,
         childAspectRatio: 1.2,
         children: [
-          buildFeatureTile('Report Abuse', Icons.report, const Color(0xFFFFCDD2), const Color(0xFFD32F2F), context),
-          buildFeatureTile('Case Tracker', Icons.track_changes, const Color(0xFFC5CAE9), const Color(0xFF303F9F), context),
-          buildFeatureTile('Directory', Icons.contacts, const Color(0xFFC8E6C9), const Color(0xFF388E3C), context),
-          buildFeatureTile('Talk', Icons.chat, const Color(0xFFFFF9C4), const Color(0xFFF57F17), context),
-          buildFeatureTile('Courses', Icons.school, const Color(0xFFE1BEE7), const Color(0xFF7B1FA2), context),
-          buildFeatureTile('Media', Icons.photo_library, const Color(0xFFFFCCBC), const Color(0xFFE64A19), context),
+          _buildFeatureTile('Report Abuse', Icons.report, const Color(0xFFE53E3E)),
+          _buildFeatureTile('Case Tracker', Icons.track_changes, const Color(0xFF3182CE)),
+          _buildFeatureTile('Directory', Icons.contacts, const Color(0xFF38A169)),
+          _buildFeatureTile('Talk', Icons.chat, const Color(0xFFD69E2E)),
+          _buildFeatureTile('Courses', Icons.school, const Color(0xFF805AD5)),
+          // Pass onTap only for Media tile
+          _buildFeatureTile(
+            'Media',
+            Icons.photo_library,
+            const Color(0xFFDD6B20),
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.media);
+            },
+          ),
         ],
       ),
     );
   }
 
-  static Widget buildFeatureTile(
-      String title, IconData icon, Color bgColor, Color iconColor, BuildContext context) {
+  // Update _buildFeatureTile to accept an optional onTap callback
+  Widget _buildFeatureTile(String title, IconData icon, Color color, {VoidCallback? onTap}) {
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -493,6 +507,29 @@ class HomeContent extends StatelessWidget {
   }
 }
 
+  BottomNavigationBar _buildBottomNavBar() {
+    return BottomNavigationBar(
+      backgroundColor: const Color(0xFF0A1628),
+      selectedItemColor: const Color(0xFFE53E3E),
+      unselectedItemColor: Colors.grey,
+      currentIndex: _currentIndex,
+      onTap: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+        // Navigate to Media page if Media is tapped
+        if (index == 4) {
+          Navigator.pushNamed(context, AppRoutes.media);
+        }
+        // ...you can add similar navigation for other bottom nav items if needed...
+      },
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Report'),
+        BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Courses'),
+        BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Talk'),
+        BottomNavigationBarItem(icon: Icon(Icons.photo_library), label: 'Media'),
+      ],
 // Placeholder widget for other pages
 class PlaceholderWidget extends StatelessWidget {
   final String title;

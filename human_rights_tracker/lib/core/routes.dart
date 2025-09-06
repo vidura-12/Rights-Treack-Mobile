@@ -3,6 +3,7 @@ import '../features/ui/landing_page.dart';
 import '../features/auth/login_page.dart';
 import '../features/auth/SignUpPage.dart';
 import '../features/ui/HomePage.dart';
+import '../features/ui/media.dart';
 import '../features/ui/text.dart';
 import '../features/ui/report_case_page.dart';
 import '../features/ui/case_list_page.dart';
@@ -12,6 +13,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String signup = '/signup';
   static const String home = '/home';
+  static const String media = '/media';
   static const String support = '/support'; // User Support page
 
   static const String reportCase = '/report-case';
@@ -28,6 +30,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SignUpPage());
       case home:
         return MaterialPageRoute(builder: (_) => const HomePage());
+      case media:
+        return MaterialPageRoute(builder: (_) => const MediaPage());
       case support:
         return MaterialPageRoute(builder: (_) => const UserSupportPage());
       case reportCase:
