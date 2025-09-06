@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:human_rights_tracker/core/routes.dart';
-import 'report_case_page.dart'; // Make sure this path is correct
+//import 'package:human_rights_tracker/widgets/app_footer.dart';
+import 'report_case_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,25 +15,80 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   final List<bool> _sidebarSelections = List.filled(11, false);
+  bool _showNotifications = false;
+  int _unreadNotifications = 0;
+
+  // Pages for bottom navigation
+  final List<Widget> _pages = [
+    const HomeContent(),
+    const ReportCasePage(),
+    const PlaceholderWidget(title: 'Courses Page'),
+    const PlaceholderWidget(title: 'Talk Page'),
+    const PlaceholderWidget(title: 'Media Page'),
+  ];
 
   @override
   void initState() {
     super.initState();
     _sidebarSelections[0] = true; // Home selected by default
+    _loadUnreadNotificationsCount();
+  }
+
+  Future<void> _loadUnreadNotificationsCount() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('read', isEqualTo: false)
+        .get();
+
+    setState(() {
+      _unreadNotifications = snapshot.size;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1628),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A1628),
         elevation: 0,
         iconTheme: const IconThemeData(color: Color.fromARGB(255, 204, 204, 204)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Colors.white),
+                onPressed: () {
+                  setState(() {
+                    _showNotifications = !_showNotifications;
+                  });
+                },
+              ),
+              if (_unreadNotifications > 0)
+                Positioned(
+                  right: 8,
+                  top: 3,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      _unreadNotifications.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
         title: Flexible(
@@ -62,8 +119,159 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       drawer: _buildSidebar(),
-      body: _buildMainContent(),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Expanded(
+                child: _pages[_currentIndex],
+              ),
+             
+            ],
+          ),
+          if (_showNotifications) _buildNotificationsPanel(),
+        ],
+      ),
       bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildNotificationsPanel() {
+    return Positioned(
+      top: 3,
+      right: 18,
+      width: MediaQuery.of(context).size.width * 0.8,
+      child: Material(
+        elevation: 8,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A243A),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[700]!),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A1628),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
+                  border: Border(bottom: BorderSide(color: Colors.grey[700]!)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Notifications',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Mark all as read',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('notifications')
+                      .orderBy('timestamp', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No notifications yet',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      );
+                    }
+
+                    return ListView(
+                      children: snapshot.data!.docs.map((DocumentSnapshot document) {
+                        Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+
+                        // Format timestamp
+                        String timeText = "Recently";
+                        if (data['timestamp'] != null) {
+                          final timestamp = data['timestamp'] as Timestamp;
+                          final now = DateTime.now();
+                          final difference = now.difference(timestamp.toDate());
+
+                          if (difference.inMinutes < 1) {
+                            timeText = "Just now";
+                          } else if (difference.inHours < 1) {
+                            timeText = "${difference.inMinutes} min ago";
+                          } else if (difference.inDays < 1) {
+                            timeText = "${difference.inHours} hours ago";
+                          } else {
+                            timeText = "${difference.inDays} days ago";
+                          }
+                        }
+
+                        return ListTile(
+                          leading: const Icon(Icons.notifications, color: Colors.deepPurple, size: 20),
+                          title: Text(
+                            data['title'] ?? 'Notification',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: data['read'] == true ? FontWeight.normal : FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                data['message'] ?? '',
+                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                timeText,
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                          trailing: data['read'] == true
+                              ? null
+                              : const Icon(Icons.circle, color: Colors.red, size: 8),
+                          onTap: () {
+                            // Mark as read when tapped
+                            document.reference.update({'read': true});
+                            _loadUnreadNotificationsCount();
+                          },
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -168,7 +376,7 @@ class _HomePageState extends State<HomePage> {
           for (int i = 0; i < _sidebarSelections.length; i++) {
             _sidebarSelections[i] = i == index;
           }
-          _currentIndex = index;
+          _currentIndex = 0; // Reset to home when using sidebar
         });
         Navigator.pop(context); // close drawer
 
@@ -180,69 +388,6 @@ class _HomePageState extends State<HomePage> {
           );
         }
       },
-    );
-  }
-
-  Widget _buildMainContent() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: GridView.count(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.2,
-        children: [
-          _buildFeatureTile('Report Abuse', Icons.report, const Color(0xFFE53E3E)),
-          _buildFeatureTile('Case Tracker', Icons.track_changes, const Color(0xFF3182CE)),
-          _buildFeatureTile('Directory', Icons.contacts, const Color(0xFF38A169)),
-          _buildFeatureTile('Talk', Icons.chat, const Color(0xFFD69E2E)),
-          _buildFeatureTile('Courses', Icons.school, const Color(0xFF805AD5)),
-          _buildFeatureTile('Media', Icons.photo_library, const Color(0xFFDD6B20)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureTile(String title, IconData icon, Color color) {
-    return Card(
-      color: const Color(0xFF1A243A),
-      elevation: 4,
-      child: InkWell(
-        onTap: () {
-          // Navigate to ReportCasePage if Case Tracker or Report Abuse
-          if (title == 'Case Tracker' || title == 'Report Abuse') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ReportCasePage()),
-            );
-          }
-          print('$title tapped');
-        },
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 30),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -264,6 +409,100 @@ class _HomePageState extends State<HomePage> {
         BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Talk'),
         BottomNavigationBarItem(icon: Icon(Icons.photo_library), label: 'Media'),
       ],
+    );
+  }
+}
+
+// HomeContent moved outside
+class HomeContent extends StatelessWidget {
+  const HomeContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: GridView.count(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.2,
+        children: [
+          buildFeatureTile('Report Abuse', Icons.report, const Color(0xFFFFCDD2), const Color(0xFFD32F2F), context),
+          buildFeatureTile('Case Tracker', Icons.track_changes, const Color(0xFFC5CAE9), const Color(0xFF303F9F), context),
+          buildFeatureTile('Directory', Icons.contacts, const Color(0xFFC8E6C9), const Color(0xFF388E3C), context),
+          buildFeatureTile('Talk', Icons.chat, const Color(0xFFFFF9C4), const Color(0xFFF57F17), context),
+          buildFeatureTile('Courses', Icons.school, const Color(0xFFE1BEE7), const Color(0xFF7B1FA2), context),
+          buildFeatureTile('Media', Icons.photo_library, const Color(0xFFFFCCBC), const Color(0xFFE64A19), context),
+        ],
+      ),
+    );
+  }
+
+  static Widget buildFeatureTile(
+      String title, IconData icon, Color bgColor, Color iconColor, BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          // Navigate to ReportCasePage if Case Tracker or Report Abuse
+          if (title == 'Case Tracker' || title == 'Report Abuse') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ReportCasePage()),
+            );
+          }
+          debugPrint('$title tapped');
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: bgColor,
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: iconColor, size: 30),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: iconColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Placeholder widget for other pages
+class PlaceholderWidget extends StatelessWidget {
+  final String title;
+
+  const PlaceholderWidget({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }
