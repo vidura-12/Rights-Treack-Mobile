@@ -2,9 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:human_rights_tracker/core/routes.dart';
-//import 'package:human_rights_tracker/widgets/app_footer.dart';
 import 'report_case_page.dart';
-
+import 'media.dart';
+import 'text.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -23,8 +23,8 @@ class _HomePageState extends State<HomePage> {
     const HomeContent(),
     const ReportCasePage(),
     const PlaceholderWidget(title: 'Courses Page'),
-    const PlaceholderWidget(title: 'Talk Page'),
-    const PlaceholderWidget(title: 'Media Page'),
+    const UserSupportPage(),
+    const MediaPage(),
   ];
 
   @override
@@ -126,7 +126,7 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: _pages[_currentIndex],
               ),
-             
+              //const AppFooter(),
             ],
           ),
           if (_showNotifications) _buildNotificationsPanel(),
@@ -379,19 +379,18 @@ class _HomePageState extends State<HomePage> {
           _currentIndex = 0; // Reset to home when using sidebar
         });
         Navigator.pop(context); // close drawer
-        // Navigate to Media page if Media is tapped
+        
+        // Navigate to different pages based on sidebar selection
         if (title == 'Media') {
-          Navigator.pushNamed(context, AppRoutes.media);
+          setState(() {
+            _currentIndex = 4; // Set to Media page index
+          });
+        } else if (title == 'Case Tracker') {
+          setState(() {
+            _currentIndex = 1; // Set to Report page index
+          });
         }
-        // ...you can add similar navigation for other sidebar items if needed...
-
-        // Navigate to ReportCasePage when Case Tracker is tapped
-        if (index == 4) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ReportCasePage()),
-          );
-        }
+        // Add more conditions for other sidebar items as needed
       },
     );
   }
@@ -406,9 +405,6 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _currentIndex = index;
         });
-        if (index == 3) {
-          Navigator.pushNamed(context, AppRoutes.support);
-        }
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -421,7 +417,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// HomeContent moved outside
+// HomeContent Widget
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
 
@@ -435,18 +431,73 @@ class HomeContent extends StatelessWidget {
         mainAxisSpacing: 16,
         childAspectRatio: 1.2,
         children: [
-          _buildFeatureTile('Report Abuse', Icons.report, const Color(0xFFE53E3E)),
-          _buildFeatureTile('Case Tracker', Icons.track_changes, const Color(0xFF3182CE)),
-          _buildFeatureTile('Directory', Icons.contacts, const Color(0xFF38A169)),
-          _buildFeatureTile('Talk', Icons.chat, const Color(0xFFD69E2E)),
-          _buildFeatureTile('Courses', Icons.school, const Color(0xFF805AD5)),
-          // Pass onTap only for Media tile
           _buildFeatureTile(
-            'Media',
-            Icons.photo_library,
-            const Color(0xFFDD6B20),
+            'Report Abuse', 
+            Icons.report, 
+            const Color(0xFFFFCDD2), 
+            const Color(0xFFD32F2F),
             onTap: () {
-              Navigator.pushNamed(context, AppRoutes.media);
+              // This will be handled by the parent widget
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ReportCasePage()),
+              );
+            },
+          ),
+          _buildFeatureTile(
+            'Case Tracker', 
+            Icons.track_changes, 
+            const Color(0xFFC5CAE9), 
+            const Color(0xFF303F9F),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ReportCasePage()),
+              );
+            },
+          ),
+          _buildFeatureTile(
+            'Directory', 
+            Icons.contacts, 
+            const Color(0xFFC8E6C9), 
+            const Color(0xFF388E3C),
+            onTap: () {
+              // Navigate to Directory page
+              // Navigator.pushNamed(context, AppRoutes.directory);
+            },
+          ),
+          _buildFeatureTile(
+            'Talk', 
+            Icons.chat, 
+            const Color(0xFFC5CAE9), 
+            const Color(0xFF303F9F),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserSupportPage()),
+              );
+            },
+          ),
+          _buildFeatureTile(
+            'Courses', 
+            Icons.school, 
+            const Color(0xFFE1BEE7), 
+            const Color(0xFF7B1FA2),
+            onTap: () {
+              // Navigate to Courses page
+              // Navigator.pushNamed(context, AppRoutes.courses);
+            },
+          ),
+          _buildFeatureTile(
+            'Media', 
+            Icons.photo_library, 
+            const Color(0xFFC5CAE9), 
+            const Color(0xFF303F9F),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MediaPage()),
+              );
             },
           ),
         ],
@@ -454,23 +505,12 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  // Update _buildFeatureTile to accept an optional onTap callback
-  Widget _buildFeatureTile(String title, IconData icon, Color color, {VoidCallback? onTap}) {
-
+  Widget _buildFeatureTile(String title, IconData icon, Color bgColor, Color iconColor, {VoidCallback? onTap}) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {
-          // Navigate to ReportCasePage if Case Tracker or Report Abuse
-          if (title == 'Case Tracker' || title == 'Report Abuse') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ReportCasePage()),
-            );
-          }
-          debugPrint('$title tapped');
-        },
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
@@ -507,29 +547,6 @@ class HomeContent extends StatelessWidget {
   }
 }
 
-  BottomNavigationBar _buildBottomNavBar() {
-    return BottomNavigationBar(
-      backgroundColor: const Color(0xFF0A1628),
-      selectedItemColor: const Color(0xFFE53E3E),
-      unselectedItemColor: Colors.grey,
-      currentIndex: _currentIndex,
-      onTap: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
-        // Navigate to Media page if Media is tapped
-        if (index == 4) {
-          Navigator.pushNamed(context, AppRoutes.media);
-        }
-        // ...you can add similar navigation for other bottom nav items if needed...
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Report'),
-        BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Courses'),
-        BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Talk'),
-        BottomNavigationBarItem(icon: Icon(Icons.photo_library), label: 'Media'),
-      ],
 // Placeholder widget for other pages
 class PlaceholderWidget extends StatelessWidget {
   final String title;
