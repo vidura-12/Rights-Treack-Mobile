@@ -5,6 +5,8 @@ import 'package:human_rights_tracker/core/routes.dart';
 import 'report_case_page.dart';
 import 'media.dart';
 import 'text.dart';
+import 'case_list_page.dart'; // ✅ Import CaseListPage
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -126,7 +128,6 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: _pages[_currentIndex],
               ),
-              //const AppFooter(),
             ],
           ),
           if (_showNotifications) _buildNotificationsPanel(),
@@ -258,7 +259,6 @@ class _HomePageState extends State<HomePage> {
                               ? null
                               : const Icon(Icons.circle, color: Colors.red, size: 8),
                           onTap: () {
-                            // Mark as read when tapped
                             document.reference.update({'read': true});
                             _loadUnreadNotificationsCount();
                           },
@@ -287,7 +287,6 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Profile header
                     Container(
                       padding: const EdgeInsets.all(20),
                       color: const Color(0xFF2D3748),
@@ -318,7 +317,6 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                    // Menu items
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Column(
@@ -340,7 +338,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            // Logout button at bottom
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: IconButton(
@@ -376,21 +373,20 @@ class _HomePageState extends State<HomePage> {
           for (int i = 0; i < _sidebarSelections.length; i++) {
             _sidebarSelections[i] = i == index;
           }
-          _currentIndex = 0; // Reset to home when using sidebar
+          _currentIndex = 0;
         });
-        Navigator.pop(context); // close drawer
-        
-        // Navigate to different pages based on sidebar selection
+        Navigator.pop(context);
+
         if (title == 'Media') {
           setState(() {
-            _currentIndex = 4; // Set to Media page index
+            _currentIndex = 4;
           });
         } else if (title == 'Case Tracker') {
-          setState(() {
-            _currentIndex = 1; // Set to Report page index
-          });
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CaseListPage()), // ✅ Go to CaseListPage
+          );
         }
-        // Add more conditions for other sidebar items as needed
       },
     );
   }
@@ -417,7 +413,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// HomeContent Widget
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
 
@@ -432,12 +427,11 @@ class HomeContent extends StatelessWidget {
         childAspectRatio: 1.2,
         children: [
           _buildFeatureTile(
-            'Report Abuse', 
-            Icons.report, 
-            const Color(0xFFFFCDD2), 
+            'Report Abuse',
+            Icons.report,
+            const Color(0xFFFFCDD2),
             const Color(0xFFD32F2F),
             onTap: () {
-              // This will be handled by the parent widget
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ReportCasePage()),
@@ -445,31 +439,27 @@ class HomeContent extends StatelessWidget {
             },
           ),
           _buildFeatureTile(
-            'Case Tracker', 
-            Icons.track_changes, 
-            const Color(0xFFC5CAE9), 
+            'Case Tracker',
+            Icons.track_changes,
+            const Color(0xFFC5CAE9),
             const Color(0xFF303F9F),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const ReportCasePage()),
+                MaterialPageRoute(builder: (_) => const CaseListPage()), // ✅ Fixed
               );
             },
           ),
           _buildFeatureTile(
-            'Directory', 
-            Icons.contacts, 
-            const Color(0xFFC8E6C9), 
+            'Directory',
+            Icons.contacts,
+            const Color(0xFFC8E6C9),
             const Color(0xFF388E3C),
-            onTap: () {
-              // Navigate to Directory page
-              // Navigator.pushNamed(context, AppRoutes.directory);
-            },
           ),
           _buildFeatureTile(
-            'Talk', 
-            Icons.chat, 
-            const Color(0xFFC5CAE9), 
+            'Talk',
+            Icons.chat,
+            const Color(0xFFC5CAE9),
             const Color(0xFF303F9F),
             onTap: () {
               Navigator.push(
@@ -479,19 +469,15 @@ class HomeContent extends StatelessWidget {
             },
           ),
           _buildFeatureTile(
-            'Courses', 
-            Icons.school, 
-            const Color(0xFFE1BEE7), 
+            'Courses',
+            Icons.school,
+            const Color(0xFFE1BEE7),
             const Color(0xFF7B1FA2),
-            onTap: () {
-              // Navigate to Courses page
-              // Navigator.pushNamed(context, AppRoutes.courses);
-            },
           ),
           _buildFeatureTile(
-            'Media', 
-            Icons.photo_library, 
-            const Color(0xFFC5CAE9), 
+            'Media',
+            Icons.photo_library,
+            const Color(0xFFC5CAE9),
             const Color(0xFF303F9F),
             onTap: () {
               Navigator.push(
@@ -547,10 +533,8 @@ class HomeContent extends StatelessWidget {
   }
 }
 
-// Placeholder widget for other pages
 class PlaceholderWidget extends StatelessWidget {
   final String title;
-
   const PlaceholderWidget({super.key, required this.title});
 
   @override
