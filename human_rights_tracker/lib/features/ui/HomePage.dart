@@ -111,7 +111,7 @@ class _HomePageState extends State<HomePage> {
                     fontSize: 12,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                 ),
               ),
             ],
