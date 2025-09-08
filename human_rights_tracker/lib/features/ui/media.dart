@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 
 class MediaPage extends StatefulWidget {
-  const MediaPage({Key? key}) : super(key: key);
+  const MediaPage({super.key});
 
   @override
   State<MediaPage> createState() => _MediaPageState();
@@ -78,7 +78,7 @@ class _MediaPageState extends State<MediaPage> {
         });
       }
     } else {
-      final List<XFile>? files = await _picker.pickMultiImage();
+      final List<XFile> files = await _picker.pickMultiImage();
       if (files != null && files.isNotEmpty) {
         setState(() {
           _selectedPaths = files.map((f) => f.path).toList();
