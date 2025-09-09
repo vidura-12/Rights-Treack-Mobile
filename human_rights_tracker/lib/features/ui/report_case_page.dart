@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../Services/auth_service.dart';
 
 class ReportCasePage extends StatefulWidget {
@@ -15,13 +18,16 @@ class _ReportCasePageState extends State<ReportCasePage> {
 
   // Controllers
   final TextEditingController locationController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
 
-  String? caseNumber; // ✅ Auto-generated case number
+  String? caseNumber; // Auto-generated case number
   String? category;
   String? victimGender;
   String? abuserGender;
   DateTime? fromDate;
   DateTime? toDate;
+
+  File? _selectedImage; // for photo
 
   final List<String> categories = [
     'Human Trafficking',
@@ -61,6 +67,28 @@ class _ReportCasePageState extends State<ReportCasePage> {
           toDate = picked;
         }
       });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _selectedImage = File(picked.path);
+      });
+    }
+  }
+
+  Future<String?> _uploadImage(File imageFile) async {
+    try {
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child("case_images/${DateTime.now().millisecondsSinceEpoch}.jpg");
+      await ref.putFile(imageFile);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print("Image upload error: $e");
+      return null;
     }
   }
 
@@ -111,13 +139,19 @@ class _ReportCasePageState extends State<ReportCasePage> {
       try {
         final userEmail = user.email ?? "Unknown User";
 
-        // 🔥 Auto-generate case number
+        // Auto-generate case number
         caseNumber = "CASE-${DateTime.now().millisecondsSinceEpoch}";
+
+        String? imageUrl;
+        if (_selectedImage != null) {
+          imageUrl = await _uploadImage(_selectedImage!);
+        }
 
         final caseData = {
           "caseNumber": caseNumber,
           "category": category,
           "location": locationController.text,
+          "description": descriptionController.text,
           "victimGender": victimGender,
           "abuserGender": abuserGender,
           "fromDate": fromDate?.toIso8601String(),
@@ -127,10 +161,10 @@ class _ReportCasePageState extends State<ReportCasePage> {
           "reportedByEmail": userEmail,
           "status": "reported",
           "lastUpdated": FieldValue.serverTimestamp(),
+          "imageUrl": imageUrl,
         };
 
         await FirebaseFirestore.instance.collection("cases").add(caseData);
-
         await _saveNotification(caseNumber!, userEmail);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,13 +173,15 @@ class _ReportCasePageState extends State<ReportCasePage> {
 
         _formKey.currentState!.reset();
         locationController.clear();
+        descriptionController.clear();
         setState(() {
-          caseNumber = null; // reset after submit
+          caseNumber = null;
           category = null;
           victimGender = null;
           abuserGender = null;
           fromDate = null;
           toDate = null;
+          _selectedImage = null;
         });
       } catch (e) {
         String errorMessage = "Failed to save case";
@@ -183,7 +219,6 @@ class _ReportCasePageState extends State<ReportCasePage> {
           key: _formKey,
           child: ListView(
             children: [
-              // ✅ Show auto-generated Case Number
               if (caseNumber != null)
                 TextFormField(
                   readOnly: true,
@@ -196,7 +231,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
                 ),
               if (caseNumber != null) const SizedBox(height: 16),
 
-              // Category Dropdown
+              // Category
               DropdownButtonFormField<String>(
                 value: category,
                 items: categories
@@ -307,6 +342,36 @@ class _ReportCasePageState extends State<ReportCasePage> {
                 ),
               const SizedBox(height: 24),
 
+              // ✅ Description moved to bottom
+              TextFormField(
+                controller: descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.description),
+                ),
+                maxLines: 3,
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Enter description' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // ✅ Image Upload moved to bottom
+              ElevatedButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.photo),
+                label: const Text("Upload Photo"),
+              ),
+              const SizedBox(height: 12),
+
+              if (_selectedImage != null)
+                Column(
+                  children: [
+                    Image.file(_selectedImage!, height: 150),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+
               // Submit Button
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitForm,
@@ -339,6 +404,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
   @override
   void dispose() {
     locationController.dispose();
+    descriptionController.dispose();
     super.dispose();
   }
 }
