@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CaseListPage extends StatelessWidget {
   const CaseListPage({super.key});
@@ -40,17 +43,20 @@ class CaseListPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const Icon(Icons.error_outline,
+                      size: 64, color: Colors.red),
                   const SizedBox(height: 16),
                   const Text(
                     "Error loading cases",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     snapshot.error.toString(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    style:
+                    const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -77,7 +83,8 @@ class CaseListPage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             itemCount: cases.length,
             itemBuilder: (context, index) {
-              final caseData = cases[index].data() as Map<String, dynamic>;
+              final doc = cases[index];
+              final caseData = doc.data() as Map<String, dynamic>;
 
               return Card(
                 shape: RoundedRectangleBorder(
@@ -91,7 +98,7 @@ class CaseListPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Case Number + Status
+                      // Case Number + Status + Edit/Delete buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -106,16 +113,82 @@ class CaseListPage extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          IconButton(
+                            icon: const Icon(Icons.edit,
+                                color: Colors.deepPurple),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CaseDetailsPage(
+                                    caseId: doc.id,
+                                    caseData: caseData,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete,
+                                color: Colors.red),
+                            onPressed: () async {
+                              final confirm =
+                              await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text("Delete Case"),
+                                  content: const Text(
+                                      "Are you sure you want to delete this case?"),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, false),
+                                        child: const Text("Cancel")),
+                                    TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, true),
+                                        child: const Text("Delete",
+                                            style: TextStyle(
+                                                color: Colors.red))),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm == true) {
+                                // Delete image from Storage if exists
+                                if (caseData['imageUrl'] != null &&
+                                    caseData['imageUrl']
+                                        .toString()
+                                        .isNotEmpty) {
+                                  try {
+                                    await FirebaseStorage.instance
+                                        .refFromURL(caseData['imageUrl'])
+                                        .delete();
+                                  } catch (e) {
+                                    // ignore if image not found
+                                  }
+                                }
+
+                                // Delete document
+                                await FirebaseFirestore.instance
+                                    .collection("cases")
+                                    .doc(doc.id)
+                                    .delete();
+                              }
+                            },
+                          ),
                           Chip(
                             label: Text(
-                              (caseData['status'] ?? 'Unknown').toUpperCase(),
+                              (caseData['status'] ?? 'Unknown')
+                                  .toUpperCase(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
                               ),
                             ),
-                            backgroundColor: _getStatusColor(caseData['status']),
+                            backgroundColor:
+                            _getStatusColor(caseData['status']),
                           ),
                         ],
                       ),
@@ -125,7 +198,8 @@ class CaseListPage extends StatelessWidget {
                       _buildInfoRow(
                         icon: Icons.category,
                         iconColor: Colors.deepPurple,
-                        text: caseData['category'] ?? 'Not specified',
+                        text:
+                        caseData['category'] ?? 'Not specified',
                       ),
                       const SizedBox(height: 8),
 
@@ -133,7 +207,8 @@ class CaseListPage extends StatelessWidget {
                       _buildInfoRow(
                         icon: Icons.location_on,
                         iconColor: Colors.redAccent,
-                        text: caseData['location'] ?? 'Location not specified',
+                        text: caseData['location'] ??
+                            'Location not specified',
                       ),
                       const SizedBox(height: 8),
 
@@ -141,7 +216,8 @@ class CaseListPage extends StatelessWidget {
                       _buildInfoRow(
                         icon: Icons.person,
                         iconColor: Colors.blue,
-                        text: "Victim: ${caseData['victimGender'] ?? 'Not specified'}",
+                        text:
+                        "Victim: ${caseData['victimGender'] ?? 'Not specified'}",
                       ),
                       const SizedBox(height: 8),
 
@@ -149,40 +225,18 @@ class CaseListPage extends StatelessWidget {
                       _buildInfoRow(
                         icon: Icons.person_off,
                         iconColor: Colors.orange,
-                        text: "Abuser: ${caseData['abuserGender'] ?? 'Not specified'}",
+                        text:
+                        "Abuser: ${caseData['abuserGender'] ?? 'Not specified'}",
                       ),
                       const SizedBox(height: 8),
 
-                      // Dates (only date, no time)
+                      // Dates
                       _buildInfoRow(
                         icon: Icons.date_range,
                         iconColor: Colors.green,
                         text:
                         "From: ${_formatDate(caseData['fromDate'])}\nTo: ${_formatDate(caseData['toDate'])}",
                         isMultiLine: true,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // View Details Button
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => CaseDetailsPage(caseData: caseData),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            "VIEW DETAILS →",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -202,7 +256,8 @@ class CaseListPage extends StatelessWidget {
     bool isMultiLine = false,
   }) {
     return Row(
-      crossAxisAlignment: isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment:
+      isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
         Icon(icon, size: 20, color: iconColor),
         const SizedBox(width: 8),
@@ -237,81 +292,198 @@ class CaseListPage extends StatelessWidget {
     if (date == null) return 'Not specified';
     if (date is Timestamp) {
       final d = date.toDate();
-      return "${d.day}/${d.month}/${d.year}"; // ✅ only date
+      return "${d.day}/${d.month}/${d.year}";
     }
     return date.toString();
   }
 }
 
-// ✅ New Page for Details
-class CaseDetailsPage extends StatelessWidget {
+// ✅ Case Details Page (unchanged except update functionality)
+class CaseDetailsPage extends StatefulWidget {
+  final String caseId;
   final Map<String, dynamic> caseData;
 
-  const CaseDetailsPage({super.key, required this.caseData});
+  const CaseDetailsPage({
+    super.key,
+    required this.caseId,
+    required this.caseData,
+  });
+
+  @override
+  State<CaseDetailsPage> createState() => _CaseDetailsPageState();
+}
+
+class _CaseDetailsPageState extends State<CaseDetailsPage> {
+  late TextEditingController descriptionController;
+  late TextEditingController locationController;
+  File? _newImage;
+
+  final List<String> categories = [
+    'Human Trafficking',
+    'Gender-Based Violence',
+    'Child Abuse',
+    'Sextortion',
+    'Rape',
+    'Domestic Abuse',
+    'Jungle Justice',
+    'Other Abuses'
+  ];
+
+  final List<String> genders = ['Male', 'Female', 'Prefer not to Say'];
+
+  String? selectedCategory;
+  String? selectedVictim;
+  String? selectedAbuser;
+
+  @override
+  void initState() {
+    super.initState();
+    descriptionController =
+        TextEditingController(text: widget.caseData['description']);
+    locationController =
+        TextEditingController(text: widget.caseData['location']);
+    selectedCategory = widget.caseData['category'];
+    selectedVictim = widget.caseData['victimGender'];
+    selectedAbuser = widget.caseData['abuserGender'];
+  }
+
+  Future<void> _pickImage() async {
+    final picked =
+    await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _newImage = File(picked.path);
+      });
+    }
+  }
+
+  Future<void> _updateCase() async {
+    String? imageUrl = widget.caseData['imageUrl'];
+
+    if (_newImage != null) {
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child("case_images")
+          .child("${widget.caseId}.jpg");
+      await ref.putFile(_newImage!);
+      imageUrl = await ref.getDownloadURL();
+    }
+
+    await FirebaseFirestore.instance
+        .collection("cases")
+        .doc(widget.caseId)
+        .update({
+      "description": descriptionController.text,
+      "category": selectedCategory,
+      "location": locationController.text,
+      "victimGender": selectedVictim,
+      "abuserGender": selectedAbuser,
+      "imageUrl": imageUrl,
+    });
+
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Case #${caseData['caseNumber']}"),
+        title: Text("Edit Case #${widget.caseData['caseNumber']}"),
         backgroundColor: Colors.deepPurple,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: _updateCase,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            if (caseData['imageUrl'] != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  caseData['imageUrl'],
+            GestureDetector(
+              onTap: _pickImage,
+              child: _newImage != null
+                  ? Image.file(_newImage!,
                   height: 200,
                   width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
+                  fit: BoxFit.cover)
+                  : (widget.caseData['imageUrl'] != null
+                  ? Image.network(
+                widget.caseData['imageUrl'],
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              )
+                  : Container(
+                height: 200,
+                color: Colors.grey[300],
+                child: const Icon(Icons.camera_alt, size: 50),
+              )),
+            ),
             const SizedBox(height: 16),
 
-            Text(
-              caseData['description'] ?? "No description provided.",
-              style: const TextStyle(fontSize: 16),
+            TextField(
+              controller: descriptionController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: "Description",
+                border: OutlineInputBorder(),
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
-            _buildDetail("Category", caseData['category']),
-            _buildDetail("Location", caseData['location']),
-            _buildDetail("Victim Gender", caseData['victimGender']),
-            _buildDetail("Abuser Gender", caseData['abuserGender']),
-            _buildDetail("From Date", caseData['fromDate']),
-            _buildDetail("To Date", caseData['toDate']),
+            DropdownButtonFormField<String>(
+              value: selectedCategory,
+              items: categories
+                  .map((c) =>
+                  DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) => setState(() => selectedCategory = v),
+              decoration: const InputDecoration(
+                labelText: "Category",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: locationController,
+              decoration: const InputDecoration(
+                labelText: "Location",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            DropdownButtonFormField<String>(
+              value: selectedVictim,
+              items: genders
+                  .map((g) =>
+                  DropdownMenuItem(value: g, child: Text(g)))
+                  .toList(),
+              onChanged: (v) => setState(() => selectedVictim = v),
+              decoration: const InputDecoration(
+                labelText: "Victim Gender",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            DropdownButtonFormField<String>(
+              value: selectedAbuser,
+              items: genders
+                  .map((g) =>
+                  DropdownMenuItem(value: g, child: Text(g)))
+                  .toList(),
+              onChanged: (v) => setState(() => selectedAbuser = v),
+              decoration: const InputDecoration(
+                labelText: "Abuser Gender",
+                border: OutlineInputBorder(),
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDetail(String label, dynamic value) {
-    String textValue = "Not specified";
-    if (value != null) {
-      if (value is Timestamp) {
-        final d = value.toDate();
-        textValue = "${d.day}/${d.month}/${d.year}";
-      } else {
-        textValue = value.toString();
-      }
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "$label: ",
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Expanded(child: Text(textValue)),
-        ],
       ),
     );
   }
