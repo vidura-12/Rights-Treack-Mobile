@@ -33,6 +33,12 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Node.js backend related
+chatbot-backend/node_modules/
+chatbot-backend/*.log
+chatbot-backend/.env
+chatbot-backend/build/
+
 # Symbolication related
 app.*.symbols
 
