@@ -38,6 +38,12 @@ chatbot-backend/node_modules/
 chatbot-backend/*.log
 chatbot-backend/.env
 chatbot-backend/build/
+#summarizer
+node_modules/
+npm-debug.log
+.env
+.DS_Store
+*.log
 
 # Symbolication related
 app.*.symbols
