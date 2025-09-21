@@ -33,6 +33,13 @@ migrate_working_dir/
 .pub/
 /build/
 
+#summarizer
+node_modules/
+npm-debug.log
+.env
+.DS_Store
+*.log
+
 # Symbolication related
 app.*.symbols
 
