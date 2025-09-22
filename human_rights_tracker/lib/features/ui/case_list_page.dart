@@ -5,8 +5,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
-class CaseListPage extends StatelessWidget {
+class CaseListPage extends StatefulWidget {
   const CaseListPage({super.key});
+
+  @override
+  State<CaseListPage> createState() => _CaseListPageState();
+}
+
+class _CaseListPageState extends State<CaseListPage> {
+  String _searchQuery = "";
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +26,30 @@ class CaseListPage extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.deepPurple,
         elevation: 4,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: "🔍 Search cases...",
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.search),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+            ),
+          ),
+        ),
       ),
       body: userEmail == null
           ? const Center(
@@ -77,7 +108,23 @@ class CaseListPage extends StatelessWidget {
             );
           }
 
-          final cases = snapshot.data!.docs;
+          // 🔎 Apply search filter
+          final cases = snapshot.data!.docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final text =
+            "${data['category']} ${data['location']} ${data['status']}"
+                .toLowerCase();
+            return text.contains(_searchQuery);
+          }).toList();
+
+          if (cases.isEmpty) {
+            return const Center(
+              child: Text(
+                "No matching cases found.",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            );
+          }
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
@@ -98,85 +145,10 @@ class CaseListPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Case Number + Status + Edit/Delete buttons
+                      // 🔹 Top row: Status + Edit/Delete buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Text(
-                              "Case #${caseData['caseNumber'] ?? 'N/A'}",
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.deepPurple,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.edit,
-                                color: Colors.deepPurple),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => CaseDetailsPage(
-                                    caseId: doc.id,
-                                    caseData: caseData,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete,
-                                color: Colors.red),
-                            onPressed: () async {
-                              final confirm =
-                              await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text("Delete Case"),
-                                  content: const Text(
-                                      "Are you sure you want to delete this case?"),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(ctx, false),
-                                        child: const Text("Cancel")),
-                                    TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(ctx, true),
-                                        child: const Text("Delete",
-                                            style: TextStyle(
-                                                color: Colors.red))),
-                                  ],
-                                ),
-                              );
-
-                              if (confirm == true) {
-                                // Delete image from Storage if exists
-                                if (caseData['imageUrl'] != null &&
-                                    caseData['imageUrl']
-                                        .toString()
-                                        .isNotEmpty) {
-                                  try {
-                                    await FirebaseStorage.instance
-                                        .refFromURL(caseData['imageUrl'])
-                                        .delete();
-                                  } catch (e) {
-                                    // ignore if image not found
-                                  }
-                                }
-
-                                // Delete document
-                                await FirebaseFirestore.instance
-                                    .collection("cases")
-                                    .doc(doc.id)
-                                    .delete();
-                              }
-                            },
-                          ),
                           Chip(
                             label: Text(
                               (caseData['status'] ?? 'Unknown')
@@ -190,6 +162,72 @@ class CaseListPage extends StatelessWidget {
                             backgroundColor:
                             _getStatusColor(caseData['status']),
                           ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.deepPurple),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CaseDetailsPage(
+                                        caseId: doc.id,
+                                        caseData: caseData,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.red),
+                                onPressed: () async {
+                                  final confirm =
+                                  await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text("Delete Case"),
+                                      content: const Text(
+                                          "Are you sure you want to delete this case?"),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(
+                                                    ctx, false),
+                                            child: const Text("Cancel")),
+                                        TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(
+                                                    ctx, true),
+                                            child: const Text("Delete",
+                                                style: TextStyle(
+                                                    color: Colors.red))),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirm == true) {
+                                    if (caseData['imageUrl'] != null &&
+                                        caseData['imageUrl']
+                                            .toString()
+                                            .isNotEmpty) {
+                                      try {
+                                        await FirebaseStorage.instance
+                                            .refFromURL(
+                                            caseData['imageUrl'])
+                                            .delete();
+                                      } catch (e) {}
+                                    }
+                                    await FirebaseFirestore.instance
+                                        .collection("cases")
+                                        .doc(doc.id)
+                                        .delete();
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -198,8 +236,7 @@ class CaseListPage extends StatelessWidget {
                       _buildInfoRow(
                         icon: Icons.category,
                         iconColor: Colors.deepPurple,
-                        text:
-                        caseData['category'] ?? 'Not specified',
+                        text: caseData['category'] ?? 'Not specified',
                       ),
                       const SizedBox(height: 8),
 
@@ -279,6 +316,10 @@ class CaseListPage extends StatelessWidget {
         return Colors.orange;
       case 'in progress':
         return Colors.blue;
+      case 'investigation':
+        return Colors.indigo;
+      case 'in court':
+        return Colors.deepOrange;
       case 'resolved':
         return Colors.green;
       case 'closed':
@@ -298,7 +339,7 @@ class CaseListPage extends StatelessWidget {
   }
 }
 
-// ✅ Case Details Page (unchanged except update functionality)
+// ✅ Case Details Page
 class CaseDetailsPage extends StatefulWidget {
   final String caseId;
   final Map<String, dynamic> caseData;
@@ -331,9 +372,19 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
 
   final List<String> genders = ['Male', 'Female', 'Prefer not to Say'];
 
+  final List<String> statuses = [
+    'Open',
+    'In Progress',
+    'Investigation',
+    'In Court',
+    'Resolved',
+    'Closed'
+  ];
+
   String? selectedCategory;
   String? selectedVictim;
   String? selectedAbuser;
+  String? selectedStatus;
 
   @override
   void initState() {
@@ -345,6 +396,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
     selectedCategory = widget.caseData['category'];
     selectedVictim = widget.caseData['victimGender'];
     selectedAbuser = widget.caseData['abuserGender'];
+    selectedStatus = widget.caseData['status'];
   }
 
   Future<void> _pickImage() async {
@@ -378,6 +430,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
       "location": locationController.text,
       "victimGender": selectedVictim,
       "abuserGender": selectedAbuser,
+      "status": selectedStatus,
       "imageUrl": imageUrl,
     });
 
@@ -405,9 +458,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
               onTap: _pickImage,
               child: _newImage != null
                   ? Image.file(_newImage!,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover)
+                  height: 200, width: double.infinity, fit: BoxFit.cover)
                   : (widget.caseData['imageUrl'] != null
                   ? Image.network(
                 widget.caseData['imageUrl'],
@@ -422,7 +473,6 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
               )),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: descriptionController,
               maxLines: 3,
@@ -432,7 +482,6 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
               ),
             ),
             const SizedBox(height: 12),
-
             DropdownButtonFormField<String>(
               value: selectedCategory,
               items: categories
@@ -446,7 +495,6 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
               ),
             ),
             const SizedBox(height: 12),
-
             TextField(
               controller: locationController,
               decoration: const InputDecoration(
@@ -455,7 +503,6 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
               ),
             ),
             const SizedBox(height: 12),
-
             DropdownButtonFormField<String>(
               value: selectedVictim,
               items: genders
@@ -469,7 +516,6 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
               ),
             ),
             const SizedBox(height: 12),
-
             DropdownButtonFormField<String>(
               value: selectedAbuser,
               items: genders
@@ -479,6 +525,21 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
               onChanged: (v) => setState(() => selectedAbuser = v),
               decoration: const InputDecoration(
                 labelText: "Abuser Gender",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: statuses.contains(selectedStatus)
+                  ? selectedStatus
+                  : null,
+              items: statuses
+                  .map((s) =>
+                  DropdownMenuItem(value: s, child: Text(s)))
+                  .toList(),
+              onChanged: (v) => setState(() => selectedStatus = v),
+              decoration: const InputDecoration(
+                labelText: "Case Status",
                 border: OutlineInputBorder(),
               ),
             ),
