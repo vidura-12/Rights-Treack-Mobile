@@ -15,11 +15,12 @@ dependencies:
   firebase_auth: ^4.19.6
   google_sign_in: ^6.2.1
   cloud_firestore: ^4.15.1
-  http: ^1.1.0
+  http: ^0.13.6
   cupertino_icons: ^1.0.8
   image_picker: ^1.0.7
   file_picker: ^8.0.3
   firebase_storage: ^11.7.7
+
 
 dev_dependencies:
   flutter_test:
@@ -30,8 +31,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icon/app-logo.png  # ← ADD THIS LINE
-  
+    - assets/icon/app-logo.png
+
 flutter_launcher_icons:
   android: true
   ios: true

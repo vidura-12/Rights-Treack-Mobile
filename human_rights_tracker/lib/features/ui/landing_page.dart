@@ -81,30 +81,51 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
         child: Stack(
           children: [
             // Static text content centered
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'RightsTrack',
-                      style: TextStyle(
-                        fontSize: 48,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2.0,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 10.0,
-                            color: Color(0xFF0A1628),
-                            offset: Offset(2.0, 2.0),
+                    // RightsTrack text with chat bubble icon
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'RightsTrack',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
                           ),
-                        ],
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE53E3E),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.chat_bubble,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Justice Starts With Awareness',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w300,
+                        letterSpacing: 1.1,
                       ),
                     ),
-                    SizedBox(height: 20),
-                    
                   ],
                 ),
               ),
