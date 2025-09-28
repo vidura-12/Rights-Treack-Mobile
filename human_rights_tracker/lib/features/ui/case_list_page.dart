@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'case_charts_page.dart';
 
 class CaseListPage extends StatefulWidget {
   const CaseListPage({super.key});
@@ -14,6 +15,15 @@ class CaseListPage extends StatefulWidget {
 
 class _CaseListPageState extends State<CaseListPage> {
   String _searchQuery = "";
+
+  final List<String> statuses = [
+    'Open',
+    'In Progress',
+    'Investigation',
+    'In Court',
+    'Resolved',
+    'Closed'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +118,6 @@ class _CaseListPageState extends State<CaseListPage> {
             );
           }
 
-          // 🔎 Apply search filter
           final cases = snapshot.data!.docs.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
             final text =
@@ -132,6 +141,12 @@ class _CaseListPageState extends State<CaseListPage> {
             itemBuilder: (context, index) {
               final doc = cases[index];
               final caseData = doc.data() as Map<String, dynamic>;
+              final status = caseData['status'] ?? 'Open';
+
+              final currentStep = statuses.indexWhere(
+                      (s) => s.toLowerCase() == status.toLowerCase());
+              final progress =
+              currentStep >= 0 ? (currentStep + 1) / statuses.length : 0.0;
 
               return Card(
                 shape: RoundedRectangleBorder(
@@ -145,22 +160,19 @@ class _CaseListPageState extends State<CaseListPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 🔹 Top row: Status + Edit/Delete buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Chip(
                             label: Text(
-                              (caseData['status'] ?? 'Unknown')
-                                  .toUpperCase(),
+                              status.toUpperCase(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
                               ),
                             ),
-                            backgroundColor:
-                            _getStatusColor(caseData['status']),
+                            backgroundColor: _getStatusColor(status),
                           ),
                           Row(
                             children: [
@@ -180,11 +192,10 @@ class _CaseListPageState extends State<CaseListPage> {
                                 },
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: Colors.red),
+                                icon:
+                                const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () async {
-                                  final confirm =
-                                  await showDialog<bool>(
+                                  final confirm = await showDialog<bool>(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
                                       title: const Text("Delete Case"),
@@ -193,13 +204,11 @@ class _CaseListPageState extends State<CaseListPage> {
                                       actions: [
                                         TextButton(
                                             onPressed: () =>
-                                                Navigator.pop(
-                                                    ctx, false),
+                                                Navigator.pop(ctx, false),
                                             child: const Text("Cancel")),
                                         TextButton(
                                             onPressed: () =>
-                                                Navigator.pop(
-                                                    ctx, true),
+                                                Navigator.pop(ctx, true),
                                             child: const Text("Delete",
                                                 style: TextStyle(
                                                     color: Colors.red))),
@@ -231,25 +240,53 @@ class _CaseListPageState extends State<CaseListPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
-
-                      // Category
+                      LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.grey[300],
+                        color: _getStatusColor(status),
+                        minHeight: 6,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: statuses.map((s) {
+                          final stepIndex = statuses.indexOf(s);
+                          final isCompleted = stepIndex <= currentStep;
+                          return Column(
+                            children: [
+                              CircleAvatar(
+                                radius: 10,
+                                backgroundColor: isCompleted
+                                    ? _getStatusColor(status)
+                                    : Colors.grey[300],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                s,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isCompleted
+                                      ? _getStatusColor(status)
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 16),
                       _buildInfoRow(
                         icon: Icons.category,
                         iconColor: Colors.deepPurple,
                         text: caseData['category'] ?? 'Not specified',
                       ),
                       const SizedBox(height: 8),
-
-                      // Location
                       _buildInfoRow(
                         icon: Icons.location_on,
                         iconColor: Colors.redAccent,
-                        text: caseData['location'] ??
-                            'Location not specified',
+                        text: caseData['location'] ?? 'Location not specified',
                       ),
                       const SizedBox(height: 8),
-
-                      // Victim Gender
                       _buildInfoRow(
                         icon: Icons.person,
                         iconColor: Colors.blue,
@@ -257,8 +294,6 @@ class _CaseListPageState extends State<CaseListPage> {
                         "Victim: ${caseData['victimGender'] ?? 'Not specified'}",
                       ),
                       const SizedBox(height: 8),
-
-                      // Abuser Gender
                       _buildInfoRow(
                         icon: Icons.person_off,
                         iconColor: Colors.orange,
@@ -266,8 +301,6 @@ class _CaseListPageState extends State<CaseListPage> {
                         "Abuser: ${caseData['abuserGender'] ?? 'Not specified'}",
                       ),
                       const SizedBox(height: 8),
-
-                      // Dates
                       _buildInfoRow(
                         icon: Icons.date_range,
                         iconColor: Colors.green,
@@ -339,7 +372,7 @@ class _CaseListPageState extends State<CaseListPage> {
   }
 }
 
-// ✅ Case Details Page
+// ✅ Case Details Page (fixed AppBar)
 class CaseDetailsPage extends StatefulWidget {
   final String caseId;
   final Map<String, dynamic> caseData;
@@ -441,15 +474,24 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Edit Case #${widget.caseData['caseNumber']}"),
+        title: const Text("My Reported Cases"),
+        centerTitle: true,
         backgroundColor: Colors.deepPurple,
+        elevation: 4,
         actions: [
           IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _updateCase,
+            icon: const Icon(Icons.pie_chart, color: Colors.white),
+            tooltip: "View Charts",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CaseChartsPage()),
+              );
+            },
           ),
         ],
-      ),
+      ), // ✅ <- AppBar closed
+
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -485,8 +527,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
             DropdownButtonFormField<String>(
               value: selectedCategory,
               items: categories
-                  .map((c) =>
-                  DropdownMenuItem(value: c, child: Text(c)))
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                   .toList(),
               onChanged: (v) => setState(() => selectedCategory = v),
               decoration: const InputDecoration(
@@ -506,8 +547,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
             DropdownButtonFormField<String>(
               value: selectedVictim,
               items: genders
-                  .map((g) =>
-                  DropdownMenuItem(value: g, child: Text(g)))
+                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                   .toList(),
               onChanged: (v) => setState(() => selectedVictim = v),
               decoration: const InputDecoration(
@@ -519,8 +559,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
             DropdownButtonFormField<String>(
               value: selectedAbuser,
               items: genders
-                  .map((g) =>
-                  DropdownMenuItem(value: g, child: Text(g)))
+                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                   .toList(),
               onChanged: (v) => setState(() => selectedAbuser = v),
               decoration: const InputDecoration(
@@ -530,12 +569,10 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: statuses.contains(selectedStatus)
-                  ? selectedStatus
-                  : null,
+              value:
+              statuses.contains(selectedStatus) ? selectedStatus : null,
               items: statuses
-                  .map((s) =>
-                  DropdownMenuItem(value: s, child: Text(s)))
+                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                   .toList(),
               onChanged: (v) => setState(() => selectedStatus = v),
               decoration: const InputDecoration(
