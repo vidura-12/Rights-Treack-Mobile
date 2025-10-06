@@ -7,6 +7,7 @@ import '../features/ui/media.dart';
 import '../features/ui/text.dart';
 import '../features/ui/report_case_page.dart';
 import '../features/ui/case_list_page.dart';
+import '../features/ui/case_charts_page.dart';
 
 class AppRoutes {
   static const String landing = '/';
@@ -18,6 +19,7 @@ class AppRoutes {
 
   static const String reportCase = '/report-case';
   static const String DisplayCase = '/display-case';
+  static const String DisplayChart = '/display-chart';
   // Add other routes as needed
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -38,6 +40,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ReportCasePage());
       case DisplayCase:
         return MaterialPageRoute(builder: (_) => const CaseListPage());
+      case DisplayChart:
+        return MaterialPageRoute(builder: (_) => const CaseChartsPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
