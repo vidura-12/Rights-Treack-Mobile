@@ -36,7 +36,7 @@ class AppRoutes {
       case support:
         return MaterialPageRoute(builder: (_) => support_file.UserSupportPage(isDarkTheme: true));
       case reportCase:
-        return MaterialPageRoute(builder: (_) => const ReportCasePage());
+        return MaterialPageRoute(builder: (_) => const ReportCasePage(isDarkTheme: true));
       case displayCase:
         return MaterialPageRoute(builder: (_) => const CaseListPage());
       case displayChart:
