@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       case 0:
         return HomeContent(isDarkTheme: _isDarkTheme);
       case 1:
-        return const ReportCasePage();
+        return ReportCasePage(isDarkTheme: _isDarkTheme);
       case 2:
         return UserSupportPage(isDarkTheme: _isDarkTheme);
       case 3:
@@ -216,7 +216,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       fontWeight: FontWeight.w400,
                     ),
                     overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                    maxLines: 2,
                   ),
                 ],
               ),
@@ -254,17 +254,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       child: SafeArea(
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_accentColor, _accentLight],
-                ),
-              ),
-             
-            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -481,7 +470,7 @@ class HomeContent extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const ReportCasePage()),
+                    MaterialPageRoute(builder: (_) =>  ReportCasePage(isDarkTheme: isDarkTheme)),
                   );
                 },
               ),
