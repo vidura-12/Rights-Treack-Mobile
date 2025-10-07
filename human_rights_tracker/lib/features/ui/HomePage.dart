@@ -23,32 +23,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   int _unreadNotifications = 0;
   late AnimationController _animationController;
   late Animation<double> _animation;
-  bool _isDarkTheme = true; 
+  bool _isDarkTheme = true;
 
-  // Theme colors
-  final Color _darkBackground = const Color(0xFF0A1628);
-  final Color _darkCard = const Color(0xFF1A243A);
-  final Color _darkAppBar = const Color(0xFF0A1628);
-  final Color _accentColor = const Color(0xFFE53E3E);
-  final Color _lightBackground = Color.fromARGB(255, 255, 255, 255);
-  final Color _lightCard = Color.fromARGB(255, 250, 250, 250);
-  final Color _lightAppBar = Color.fromARGB(255, 255, 255, 255);
-
-  // Pages for bottom navigation
-  final List<Widget> _pages = [
-    const HomeContent(),
-    const ReportCasePage(),
-    const PlaceholderWidget(title: 'Courses Page'),
-    const UserSupportPage(),
-    const MediaPage(),
-  ];
+  // Modern theme colors
+  final Color _darkBackground = const Color(0xFF0F1419);
+  final Color _darkCard = const Color(0xFF1C2128);
+  final Color _darkAppBar = const Color(0xFF0F1419);
+  final Color _accentColor = const Color(0xFF6366F1);
+  final Color _accentLight = const Color(0xFF818CF8);
+  final Color _lightBackground = const Color(0xFFF8FAFC);
+  final Color _lightCard = const Color(0xFFFFFFFF);
+  final Color _lightAppBar = const Color(0xFFFFFFFF);
 
   @override
   void initState() {
     super.initState();
-    _sidebarSelections[0] = true; // Home selected by default
-    
-    // Animation controller for smooth notification panel
+    _sidebarSelections[0] = true;
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -57,7 +48,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-    
+
     _loadUnreadNotificationsCount();
   }
 
@@ -103,13 +94,27 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  // Get current theme colors
   Color get _backgroundColor => _isDarkTheme ? _darkBackground : _lightBackground;
   Color get _cardColor => _isDarkTheme ? _darkCard : _lightCard;
   Color get _appBarColor => _isDarkTheme ? _darkAppBar : _lightAppBar;
   Color get _textColor => _isDarkTheme ? Colors.white : Colors.black87;
   Color get _secondaryTextColor => _isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
   Color get _iconColor => _isDarkTheme ? Colors.white : Colors.black87;
+
+  Widget _getCurrentPage() {
+    switch (_currentIndex) {
+      case 0:
+        return HomeContent(isDarkTheme: _isDarkTheme);
+      case 1:
+        return const ReportCasePage();
+      case 2:
+        return UserSupportPage(isDarkTheme: _isDarkTheme);
+      case 3:
+        return MediaPage(isDarkTheme: _isDarkTheme);
+      default:
+        return HomeContent(isDarkTheme: _isDarkTheme);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,40 +125,54 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         elevation: 0,
         iconTheme: IconThemeData(color: _iconColor),
         actions: [
-          // Theme Toggle Button
           IconButton(
-            icon: Icon(
-              _isDarkTheme ? Icons.light_mode : Icons.dark_mode,
-              color: _iconColor,
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _isDarkTheme ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                _isDarkTheme ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                color: _iconColor,
+                size: 20,
+              ),
             ),
             onPressed: _toggleTheme,
           ),
-          // Notifications Button
           Stack(
             children: [
               IconButton(
-                icon: Icon(Icons.notifications, color: _iconColor),
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _isDarkTheme ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.notifications_outlined, color: _iconColor, size: 20),
+                ),
                 onPressed: _toggleNotifications,
               ),
               if (_unreadNotifications > 0)
                 Positioned(
                   right: 8,
-                  top: 3,
+                  top: 8,
                   child: Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.red,
+                      color: const Color(0xFFEF4444),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
+                      minWidth: 18,
+                      minHeight: 18,
                     ),
                     child: Text(
-                      _unreadNotifications.toString(),
+                      _unreadNotifications > 9 ? '9+' : _unreadNotifications.toString(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
+                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -161,53 +180,61 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 ),
             ],
           ),
+          const SizedBox(width: 8),
         ],
-        title: Flexible(
-          child: Row(
-            children: [
-              Text(
-                'RightsTrack',
-                style: TextStyle(
-                  color: _textColor,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_accentColor, _accentLight],
                 ),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Justice Starts With Awareness',
-                  style: TextStyle(
-                    color: _secondaryTextColor,
-                    fontSize: 12,
-                    overflow: TextOverflow.ellipsis,
+              child: const Icon(Icons.verified_user, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'RightsTrack',
+                    style: TextStyle(
+                      color: _textColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  maxLines: 2,
-                ),
+                  Text(
+                    'Justice Starts With Awareness',
+                    style: TextStyle(
+                      color: _secondaryTextColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       drawer: _buildSidebar(),
       body: Stack(
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: _pages[_currentIndex],
-              ),
-            ],
-          ),
-          
-          // Notification Panel with smooth animation
+          _getCurrentPage(),
           if (_showNotifications)
             Positioned(
-              top: kToolbarHeight -30,
-              right: 22,
+              top: 0,
+              right: 16,
               child: SizeTransition(
                 sizeFactor: _animation,
-                axisAlignment: -0.5,
+                axisAlignment: -1,
                 child: NotificationPanel(
                   onMarkAllAsRead: _onMarkAllAsRead,
                   onClose: _toggleNotifications,
@@ -226,77 +253,89 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       backgroundColor: _cardColor,
       child: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      color: _isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[200],
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Color(0xFFE53E3E),
-                            child: Icon(Icons.person, color: Colors.white, size: 30),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Vidura NirmaI',
-                            style: TextStyle(
-                              color: _textColor,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'viduranirmai@gmail.com',
-                            style: TextStyle(color: _secondaryTextColor, fontSize: 14),
-                          ),
-                          const SizedBox(height: 16),
-                          Divider(color: _isDarkTheme ? Colors.grey[700] : Colors.grey[400]),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Column(
-                        children: [
-                          _buildSidebarItem(0, Icons.home, 'Home'),
-                          _buildSidebarItem(1, Icons.person, 'Profile', onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const ProfilePage()),
-                            );
-                          }),
-                          _buildSidebarItem(2, Icons.photo_library, 'Media'),
-                          _buildSidebarItem(3, Icons.contacts, 'Directory'),
-                          _buildSidebarItem(4, Icons.track_changes, 'Case Tracker'),
-                          _buildSidebarItem(5, Icons.people, 'Supporters'),
-                          _buildSidebarItem(6, Icons.info, 'About Us'),
-                          _buildSidebarItem(7, Icons.contact_mail, 'Contact Us'),
-                          _buildSidebarItem(8, Icons.privacy_tip, 'Privacy Policy'),
-                          _buildSidebarItem(9, Icons.help, 'FAQ'),
-                        ],
-                      ),
-                    ),
-                  ],
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [_accentColor, _accentLight],
                 ),
               ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: const CircleAvatar(
+                      radius: 35,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.person, color: Color(0xFF6366F1), size: 35),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: IconButton(
-                icon: Icon(Icons.logout, color: _textColor),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _buildSidebarItem(0, Icons.home_outlined, 'Home'),
+                  _buildSidebarItem(1, Icons.person_outline, 'Profile', onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ProfilePage(isDarkTheme: _isDarkTheme)),
+                    );
+                  }),
+                  _buildSidebarItem(2, Icons.photo_library_outlined, 'Media', onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MediaPage(isDarkTheme: _isDarkTheme)),
+                    );
+                  }),
+                  _buildSidebarItem(3, Icons.track_changes, 'Case Tracker', onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CaseListPage()),
+                    );
+                  }),
+                  _buildSidebarItem(4, Icons.chat_outlined, 'Talk', onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => UserSupportPage(isDarkTheme: _isDarkTheme)),
+                    );
+                  }),
+                  const Divider(height: 32),
+                  _buildSidebarItem(5, Icons.people_outline, 'Supporters'),
+                  _buildSidebarItem(6, Icons.info_outline, 'About Us'),
+                  _buildSidebarItem(7, Icons.mail_outline, 'Contact Us'),
+                  _buildSidebarItem(8, Icons.privacy_tip_outlined, 'Privacy Policy'),
+                  _buildSidebarItem(9, Icons.help_outline, 'FAQ'),
+                ],
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.all(16),
+              width: double.infinity,
+              child: ElevatedButton.icon(
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
                   Navigator.pushReplacementNamed(context, AppRoutes.login);
                 },
+                icon: const Icon(Icons.logout),
+                label: const Text('Sign Out'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEF4444),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ],
@@ -306,184 +345,435 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildSidebarItem(int index, IconData icon, String title, {VoidCallback? onTap}) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: _sidebarSelections[index] ? _accentColor : _textColor,
+    final isSelected = _sidebarSelections[index];
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? _accentColor.withOpacity(0.15)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: _sidebarSelections[index] ? _accentColor : _textColor,
-          fontWeight: _sidebarSelections[index] ? FontWeight.bold : FontWeight.normal,
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isSelected ? _accentColor : _textColor,
+          size: 22,
         ),
-      ),
-      selected: _sidebarSelections[index],
-      onTap: () {
-        setState(() {
-          for (int i = 0; i < _sidebarSelections.length; i++) {
-            _sidebarSelections[i] = i == index;
-          }
-        });
-        Navigator.pop(context);
-        
-        if (onTap != null) {
-          onTap();
-        } else if (title == 'Media') {
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? _accentColor : _textColor,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 15,
+          ),
+        ),
+        selected: isSelected,
+        onTap: () {
           setState(() {
-            _currentIndex = 4;
+            for (int i = 0; i < _sidebarSelections.length; i++) {
+              _sidebarSelections[i] = i == index;
+            }
           });
-        } else if (title == 'Case Tracker') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CaseListPage()),
-          );
-        }
-      },
+          Navigator.pop(context);
+          if (onTap != null) {
+            onTap();
+          }
+        },
+      ),
     );
   }
 
-  BottomNavigationBar _buildBottomNavBar() {
-    return BottomNavigationBar(
-      backgroundColor: _isDarkTheme ? const Color(0xFF0A1628) : Colors.white,
-      selectedItemColor: _accentColor,
-      unselectedItemColor: _isDarkTheme ? Colors.grey : Colors.grey[600],
-      currentIndex: _currentIndex,
-      onTap: (index) {
+  Widget _buildBottomNavBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
+              _buildNavItem(1, Icons.report_outlined, Icons.report, 'Report'),
+              _buildNavItem(2, Icons.chat_outlined, Icons.chat, 'Talk'),
+              _buildNavItem(3, Icons.photo_library_outlined, Icons.photo_library, 'Media'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData outlinedIcon, IconData filledIcon, String label) {
+    final isSelected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () {
         setState(() {
           _currentIndex = index;
         });
       },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Report'),
-        BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Courses'),
-        BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Talk'),
-        BottomNavigationBarItem(icon: Icon(Icons.photo_library), label: 'Media'),
-      ],
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _accentColor.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? filledIcon : outlinedIcon,
+              color: isSelected ? _accentColor : _secondaryTextColor,
+              size: 24,
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: _accentColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
 
 class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
+  final bool isDarkTheme;
+
+  const HomeContent({super.key, required this.isDarkTheme});
 
   @override
   Widget build(BuildContext context) {
-    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDarkTheme ? const Color(0xFF0A1628) : Colors.white;
+    final backgroundColor = isDarkTheme ? const Color(0xFF0F1419) : const Color(0xFFF8FAFC);
+    final cardColor = isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
     final textColor = isDarkTheme ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
 
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: GridView.count(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.2,
-        children: [
-          _buildFeatureTile(
-            'Report Abuse',
-            Icons.report,
-            const Color(0xFFFFCDD2),
-            const Color(0xFFD32F2F),
-            onTap: () {
-              Navigator.push(
+    return Container(
+      color: backgroundColor,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quick Actions',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildModernFeatureCard(
                 context,
-                MaterialPageRoute(builder: (_) => const ReportCasePage()),
-              );
-            },
-          ),
-          _buildFeatureTile(
-            'Case Tracker',
-            Icons.track_changes,
-            const Color(0xFFC5CAE9),
-            const Color(0xFF303F9F),
-            onTap: () {
-              Navigator.push(
+                'Report a Case',
+                'Document and report human rights violations',
+                Icons.report_outlined,
+                const LinearGradient(
+                  colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                ),
+                cardColor,
+                textColor,
+                secondaryTextColor,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ReportCasePage()),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildCompactCard(
+                      context,
+                      'Track Cases',
+                      Icons.track_changes,
+                      const LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                      ),
+                      cardColor,
+                      textColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CaseListPage()),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildCompactCard(
+                      context,
+                      'Get Support',
+                      Icons.chat_outlined,
+                      const LinearGradient(
+                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                      ),
+                      cardColor,
+                      textColor,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => UserSupportPage(isDarkTheme: isDarkTheme)),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildModernFeatureCard(
                 context,
-                MaterialPageRoute(builder: (_) => const CaseListPage()),
-              );
-            },
+                'Media Library',
+                'Access educational resources and documentation',
+                Icons.photo_library_outlined,
+                const LinearGradient(
+                  colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                ),
+                cardColor,
+                textColor,
+                secondaryTextColor,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MediaPage(isDarkTheme: isDarkTheme)),
+                  );
+                },
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Resources',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildInfoCard(
+                'Emergency Hotline',
+                '119 - Available 24/7',
+                Icons.phone_in_talk,
+                const Color(0xFFEF4444),
+                cardColor,
+                textColor,
+                secondaryTextColor,
+              ),
+              const SizedBox(height: 12),
+              _buildInfoCard(
+                'Legal Support',
+                'Free consultation available',
+                Icons.gavel,
+                const Color(0xFF6366F1),
+                cardColor,
+                textColor,
+                secondaryTextColor,
+              ),
+            ],
           ),
-          _buildFeatureTile(
-            'Directory',
-            Icons.contacts,
-            const Color(0xFFC8E6C9),
-            const Color(0xFF388E3C),
-          ),
-          _buildFeatureTile(
-            'Talk',
-            Icons.chat,
-            const Color(0xFFC5CAE9),
-            const Color(0xFF303F9F),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const UserSupportPage()),
-              );
-            },
-          ),
-          _buildFeatureTile(
-            'Courses',
-            Icons.school,
-            const Color(0xFFE1BEE7),
-            const Color(0xFF7B1FA2),
-          ),
-          _buildFeatureTile(
-            'Media',
-            Icons.photo_library,
-            const Color(0xFFC5CAE9),
-            const Color(0xFF303F9F),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MediaPage()),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildFeatureTile(String title, IconData icon, Color bgColor, Color iconColor, {VoidCallback? onTap}) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: bgColor,
-          ),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: iconColor, size: 30),
+  Widget _buildModernFeatureCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Gradient gradient,
+    Color cardColor,
+    Color textColor,
+    Color secondaryTextColor,
+    {VoidCallback? onTap}
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: gradient,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 12),
+                child: Icon(icon, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: secondaryTextColor,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: secondaryTextColor,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactCard(
+    BuildContext context,
+    String title,
+    IconData icon,
+    Gradient gradient,
+    Color cardColor,
+    Color textColor,
+    {VoidCallback? onTap}
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: Colors.white, size: 28),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color accentColor,
+    Color cardColor,
+    Color textColor,
+    Color secondaryTextColor,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: accentColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: accentColor, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
                   title,
                   style: TextStyle(
-                    color: iconColor,
+                    color: textColor,
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
-                )
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: secondaryTextColor,
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

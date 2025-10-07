@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../../core/app_wrapper.dart';
 
 class UserSupportPage extends StatefulWidget {
-  const UserSupportPage({super.key});
+  final bool isDarkTheme;
+  
+  const UserSupportPage({super.key, required this.isDarkTheme});
 
   @override
   State<UserSupportPage> createState() => _UserSupportPageState();
@@ -19,10 +20,21 @@ class _UserSupportPageState extends State<UserSupportPage> {
     },
   ];
 
-  // 🚨 Put your API Key here
-  // final String _apiKey = "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";
-
   bool _isLoading = false;
+  bool _connectionError = false;
+
+  // Theme colors based on parent theme
+  Color get _backgroundColor => widget.isDarkTheme ? const Color(0xFF0A1628) : Colors.white;
+  Color get _cardColor => widget.isDarkTheme ? const Color(0xFF1A243A) : const Color(0xFFFAFAFA);
+  Color get _appBarColor => widget.isDarkTheme ? const Color(0xFF0A1628) : Colors.white;
+  Color get _textColor => widget.isDarkTheme ? Colors.white : Colors.black87;
+  Color get _secondaryTextColor => widget.isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
+  Color get _iconColor => widget.isDarkTheme ? Colors.white : Colors.black87;
+  Color get _accentColor => const Color(0xFFE53E3E);
+  Color get _userMessageColor => widget.isDarkTheme ? const Color(0xFF3182CE) : const Color(0xFF3182CE);
+  Color get _botMessageColor => widget.isDarkTheme ? const Color(0xFF2D3748) : const Color(0xFFF7FAFC);
+  Color get _inputBackgroundColor => widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[100]!;
+  Color get _borderColor => widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[300]!;
 
   void _sendMessage() async {
     final text = _messageController.text.trim();
@@ -31,6 +43,7 @@ class _UserSupportPageState extends State<UserSupportPage> {
     setState(() {
       _chat.add({'role': 'user', 'text': text});
       _isLoading = true;
+      _connectionError = false;
       _messageController.clear();
     });
 
@@ -44,169 +57,389 @@ class _UserSupportPageState extends State<UserSupportPage> {
   }
 
   Future<String> _getAIReply(String userText) async {
-  const String apiUrl = "http://localhost:5000/chat";
+    // Try multiple endpoints for better compatibility
+    final endpoints = [
+      "http://localhost:5000/chat",
+      "http://10.0.2.2:5000/chat",
+      "http://127.0.0.1:5000/chat",
+    ];
 
-  try {
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({
-        "message": userText,
-      }),
-    );
+    for (final endpoint in endpoints) {
+      try {
+        final response = await http.post(
+          Uri.parse(endpoint),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: jsonEncode({
+            "message": userText,
+          }),
+        ).timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data["reply"];
-    } else {
-      return "Error: {response.statusCode} - {response.body}";
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data["reply"] ?? "I received your message but couldn't generate a proper response.";
+        }
+      } catch (e) {
+        // Continue to next endpoint
+        if (endpoint == endpoints.last) {
+          // Last endpoint failed
+          setState(() {
+            _connectionError = true;
+          });
+          return _getFallbackResponse(userText);
+        }
+      }
     }
-  } catch (e) {
-    return "Something went wrong: $e";
+    
+    return _getFallbackResponse(userText);
   }
+
+  String _getFallbackResponse(String userText) {
+    final lowerText = userText.toLowerCase();
+    
+    if (lowerText.contains('hello') || lowerText.contains('hi')) {
+      return "Hello! I'm here to help. It seems I'm having connection issues, but I can still assist with basic questions about human rights, case reporting, or using this app.";
+    } else if (lowerText.contains('report') || lowerText.contains('case')) {
+      return "To report a case, go to the 'Report Abuse' section from the home page. You can provide details, upload evidence, and track your case status.";
+    } else if (lowerText.contains('right') || lowerText.contains('help')) {
+      return "This app helps you report human rights violations. You can document cases, get legal guidance, and connect with support organizations.";
+    } else if (lowerText.contains('contact') || lowerText.contains('emergency')) {
+      return "For emergencies, contact local authorities immediately. You can also check the 'Directory' section for support organizations.";
+    } else {
+      return "I understand you're asking about: '$userText'. Currently, I'm experiencing connection issues. Please try again later or contact support through other channels. In the meantime, you can browse our FAQ section for immediate help.";
+    }
+  }
+
+  void _retryConnection() {
+    setState(() {
+      _connectionError = false;
+    });
+    if (_chat.last['role'] == 'user') {
+      _sendMessage();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AppWrapper(
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0A1628),
-              Color(0xFF1A243A),
-            ],
+    return Scaffold(
+      backgroundColor: _backgroundColor,
+      appBar: AppBar(
+        backgroundColor: _appBarColor,
+        elevation: 0,
+        title: Text(
+          'AI Support Assistant',
+          style: TextStyle(
+            color: _textColor,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.support_agent, color: Color(0xFFE53E3E), size: 32),
-                SizedBox(width: 12),
+        iconTheme: IconThemeData(color: _iconColor),
+      ),
+      body: Column(
+        children: [
+          // Header Section
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.support_agent, color: _accentColor, size: 32),
+                    const SizedBox(width: 12),
+                    Text(
+                      'User Support Management',
+                      style: TextStyle(
+                        color: _textColor,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  'User Support Management',
+                  'Ask me anything! I am powered by AI to help with support.',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    color: _secondaryTextColor,
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Ask me anything! I am powered by AI to help with support.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-                fontStyle: FontStyle.italic,
+          ),
+
+          // Connection Error Banner
+          if (_connectionError)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.orange[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange),
               ),
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'AI Chatbot',
+              child: Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.orange[800]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Connection issue. Using fallback responses.',
                       style: TextStyle(
-                        color: Color(0xFF2D3748),
-                        fontSize: 18,
+                        color: Colors.orange[800],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _retryConnection,
+                    child: Text(
+                      'Retry',
+                      style: TextStyle(
+                        color: Colors.orange[800],
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Expanded(
+                  ),
+                ],
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // Chat Container
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: _cardColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.isDarkTheme 
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Chat Header
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: widget.isDarkTheme 
+                          ? const Color(0xFF2D3748) 
+                          : Colors.grey[50],
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'AI Support Assistant',
+                          style: TextStyle(
+                            color: _textColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (_connectionError)
+                          Icon(Icons.wifi_off, color: Colors.orange, size: 16),
+                      ],
+                    ),
+                  ),
+
+                  // Messages Area
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
                       child: ListView.builder(
+                        reverse: false,
                         itemCount: _chat.length,
                         itemBuilder: (context, index) {
                           final msg = _chat[index];
                           final isUser = msg['role'] == 'user';
-                          return Align(
-                            alignment: isUser
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isUser
-                                    ? const Color(0xFF3182CE)
-                                    : const Color(0xFFF7FAFC),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                msg['text'] ?? '',
-                                style: TextStyle(
-                                  color: isUser
-                                      ? Colors.white
-                                      : const Color(0xFF2D3748),
-                                  fontSize: 15,
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              mainAxisAlignment: isUser 
+                                  ? MainAxisAlignment.end 
+                                  : MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (!isUser)
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: _accentColor,
+                                    child: Icon(
+                                      Icons.support_agent,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: isUser 
+                                          ? _userMessageColor 
+                                          : _botMessageColor,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      msg['text'] ?? '',
+                                      style: TextStyle(
+                                        color: isUser 
+                                            ? Colors.white 
+                                            : _textColor,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (isUser)
+                                  const SizedBox(width: 8),
+                                if (isUser)
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: Colors.grey[300],
+                                    child: Icon(
+                                      Icons.person,
+                                      color: Colors.grey[600],
+                                      size: 16,
+                                    ),
+                                  ),
+                              ],
                             ),
                           );
                         },
                       ),
                     ),
-                    if (_isLoading)
-                      const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                  ),
+
+                  // Loading Indicator
+                  if (_isLoading)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: _accentColor,
+                            child: Icon(
+                              Icons.support_agent,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: _botMessageColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: _accentColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Thinking...',
+                                  style: TextStyle(
+                                    color: _secondaryTextColor,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    Row(
+                    ),
+
+                  // Input Area
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: widget.isDarkTheme 
+                          ? const Color(0xFF2D3748) 
+                          : Colors.grey[50],
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Row(
                       children: [
                         Expanded(
-                          child: TextField(
-                            controller: _messageController,
-                            decoration: const InputDecoration(
-                              hintText: 'Type your message...',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _inputBackgroundColor,
+                              borderRadius: BorderRadius.circular(25),
+                              border: Border.all(color: _borderColor),
                             ),
-                            onSubmitted: (_) => _sendMessage(),
+                            child: TextField(
+                              controller: _messageController,
+                              style: TextStyle(color: _textColor),
+                              decoration: InputDecoration(
+                                hintText: 'Type your message...',
+                                hintStyle: TextStyle(color: _secondaryTextColor),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                              ),
+                              onSubmitted: (_) => _sendMessage(),
+                            ),
                           ),
                         ),
-                        IconButton(
-                          icon:
-                              const Icon(Icons.send, color: Color(0xFF3182CE)),
-                          onPressed: _sendMessage,
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: _accentColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.send, color: Colors.white),
+                            onPressed: _sendMessage,
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
