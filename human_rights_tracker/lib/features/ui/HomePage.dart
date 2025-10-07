@@ -195,9 +195,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               child: const Icon(Icons.verified_user, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
-            Expanded(
+            Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'RightsTrack',
@@ -214,6 +215,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ],
               ),
@@ -274,20 +277,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       child: Icon(Icons.person, color: Color(0xFF6366F1), size: 35),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Vidura Nirmal',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'viduranirmai@gmail.com',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
                 ],
               ),
             ),
@@ -330,7 +319,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
+              width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
@@ -341,7 +331,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEF4444),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

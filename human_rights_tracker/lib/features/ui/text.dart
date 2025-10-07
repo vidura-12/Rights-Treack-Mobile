@@ -60,7 +60,7 @@ class _UserSupportPageState extends State<UserSupportPage> {
     // Try multiple endpoints for better compatibility
     final endpoints = [
       "http://localhost:5000/chat",
-      "http://10.0.2.2:5000/chat", // For Android emulator
+      "http://10.0.2.2:5000/chat",
       "http://127.0.0.1:5000/chat",
     ];
 
