@@ -35,13 +35,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final Color _lightAppBar = Color.fromARGB(255, 255, 255, 255);
 
   // Pages for bottom navigation
-  final List<Widget> _pages = [
-    const HomeContent(),
-    const ReportCasePage(),
-    const PlaceholderWidget(title: 'Courses Page'),
-    const UserSupportPage(),
-    const MediaPage(),
-  ];
+  late final List<Widget> _pages;
 
   @override
   void initState() {
@@ -57,6 +51,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       parent: _animationController,
       curve: Curves.easeInOut,
     );
+    
+    // Initialize pages with theme support
+    _pages = [
+      HomeContent(isDarkTheme: _isDarkTheme),
+      const ReportCasePage(),
+      UserSupportPage(isDarkTheme: _isDarkTheme),
+      MediaPage(isDarkTheme: _isDarkTheme),
+    ];
     
     _loadUnreadNotificationsCount();
   }
@@ -90,6 +92,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void _toggleTheme() {
     setState(() {
       _isDarkTheme = !_isDarkTheme;
+      // Update pages with new theme
+      _pages = [
+        HomeContent(isDarkTheme: _isDarkTheme),
+        const ReportCasePage(),
+        UserSupportPage(isDarkTheme: _isDarkTheme),
+        MediaPage(isDarkTheme: _isDarkTheme),
+      ];
     });
   }
 
@@ -271,12 +280,27 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           _buildSidebarItem(1, Icons.person, 'Profile', onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const ProfilePage()),
+                              MaterialPageRoute(builder: (_) => ProfilePage(isDarkTheme: _isDarkTheme)),
                             );
                           }),
-                          _buildSidebarItem(2, Icons.photo_library, 'Media'),
-                          _buildSidebarItem(3, Icons.contacts, 'Directory'),
-                          _buildSidebarItem(4, Icons.track_changes, 'Case Tracker'),
+                          _buildSidebarItem(2, Icons.photo_library, 'Media', onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => MediaPage(isDarkTheme: _isDarkTheme)),
+                            );
+                          }),
+                          _buildSidebarItem(3, Icons.track_changes, 'Case Tracker', onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const CaseListPage()),
+                            );
+                          }),
+                          _buildSidebarItem(4, Icons.chat, 'Talk', onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => UserSupportPage(isDarkTheme: _isDarkTheme)),
+                            );
+                          }),
                           _buildSidebarItem(5, Icons.people, 'Supporters'),
                           _buildSidebarItem(6, Icons.info, 'About Us'),
                           _buildSidebarItem(7, Icons.contact_mail, 'Contact Us'),
@@ -329,15 +353,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         
         if (onTap != null) {
           onTap();
-        } else if (title == 'Media') {
-          setState(() {
-            _currentIndex = 4;
-          });
-        } else if (title == 'Case Tracker') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CaseListPage()),
-          );
         }
       },
     );
@@ -357,7 +372,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Report'),
-        BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Courses'),
         BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Talk'),
         BottomNavigationBarItem(icon: Icon(Icons.photo_library), label: 'Media'),
       ],
@@ -366,83 +380,72 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 }
 
 class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
+  final bool isDarkTheme;
+  
+  const HomeContent({super.key, required this.isDarkTheme});
 
   @override
   Widget build(BuildContext context) {
-    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDarkTheme ? const Color(0xFF0A1628) : Colors.white;
-    final textColor = isDarkTheme ? Colors.white : Colors.black87;
-
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: GridView.count(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.2,
-        children: [
-          _buildFeatureTile(
-            'Report Abuse',
-            Icons.report,
-            const Color(0xFFFFCDD2),
-            const Color(0xFFD32F2F),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ReportCasePage()),
-              );
-            },
-          ),
-          _buildFeatureTile(
-            'Case Tracker',
-            Icons.track_changes,
-            const Color(0xFFC5CAE9),
-            const Color(0xFF303F9F),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CaseListPage()),
-              );
-            },
-          ),
-          _buildFeatureTile(
-            'Directory',
-            Icons.contacts,
-            const Color(0xFFC8E6C9),
-            const Color(0xFF388E3C),
-          ),
-          _buildFeatureTile(
-            'Talk',
-            Icons.chat,
-            const Color(0xFFC5CAE9),
-            const Color(0xFF303F9F),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const UserSupportPage()),
-              );
-            },
-          ),
-          _buildFeatureTile(
-            'Courses',
-            Icons.school,
-            const Color(0xFFE1BEE7),
-            const Color(0xFF7B1FA2),
-          ),
-          _buildFeatureTile(
-            'Media',
-            Icons.photo_library,
-            const Color(0xFFC5CAE9),
-            const Color(0xFF303F9F),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MediaPage()),
-              );
-            },
-          ),
-        ],
+    return Container(
+      color: isDarkTheme ? const Color(0xFF0A1628) : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.2,
+          children: [
+            _buildFeatureTile(
+              'Report Abuse',
+              Icons.report,
+              isDarkTheme ? const Color(0xFF2A1F2D) : const Color(0xFFFFCDD2),
+              const Color(0xFFD32F2F),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReportCasePage()),
+                );
+              },
+            ),
+            _buildFeatureTile(
+              'Case Tracker',
+              Icons.track_changes,
+              isDarkTheme ? const Color(0xFF1F2A3D) : const Color(0xFFC5CAE9),
+              const Color(0xFF303F9F),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CaseListPage()),
+                );
+              },
+            ),
+            _buildFeatureTile(
+              'Talk',
+              Icons.chat,
+              isDarkTheme ? const Color(0xFF1F2A3D) : const Color(0xFFC5CAE9),
+              const Color(0xFF303F9F),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => UserSupportPage(isDarkTheme: isDarkTheme)),
+                );
+              },
+            ),
+            _buildFeatureTile(
+              'Media',
+              Icons.photo_library,
+              isDarkTheme ? const Color(0xFF1F2A3D) : const Color(0xFFC5CAE9),
+              const Color(0xFF303F9F),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => MediaPage(isDarkTheme: isDarkTheme)),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -465,8 +468,8 @@ class HomeContent extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: isDarkTheme ? Colors.grey[800] : Colors.white,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: iconColor, size: 30),
@@ -479,6 +482,7 @@ class HomeContent extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
+                  textAlign: TextAlign.center,
                 )
               ],
             ),

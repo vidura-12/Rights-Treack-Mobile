@@ -4,7 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:human_rights_tracker/models/user_profile.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final bool isDarkTheme;
+  
+  const ProfilePage({super.key, required this.isDarkTheme});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -24,6 +26,22 @@ class _ProfilePageState extends State<ProfilePage> {
   final _phoneController = TextEditingController();
   final _countryController = TextEditingController();
   final _stateController = TextEditingController();
+
+  // Theme colors based on parent theme
+  Color get _backgroundColor => widget.isDarkTheme ? const Color(0xFF0A1628) : Colors.white;
+  Color get _cardColor => widget.isDarkTheme ? const Color(0xFF1A243A) : const Color(0xFFFAFAFA);
+  Color get _appBarColor => widget.isDarkTheme ? const Color(0xFF0A1628) : Colors.white;
+  Color get _textColor => widget.isDarkTheme ? Colors.white : Colors.black87;
+  Color get _secondaryTextColor => widget.isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
+  Color get _iconColor => widget.isDarkTheme ? Colors.white : Colors.black87;
+  Color get _dividerColor => widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[300]!;
+  Color get _headerColor => widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[200]!;
+  Color get _enabledFieldColor => widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[100]!;
+  Color get _disabledFieldColor => widget.isDarkTheme ? const Color(0xFF1A243A) : Colors.grey[50]!;
+  Color get _fieldBorderColor => widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[400]!;
+  Color get _cancelButtonColor => widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[300]!;
+  Color get _cancelButtonTextColor => widget.isDarkTheme ? Colors.white : Colors.black87;
+  Color get _accentColor => const Color(0xFFE53E3E);
 
   @override
   void initState() {
@@ -102,9 +120,9 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully'),
-          backgroundColor: Color(0xFF388E3C),
+        SnackBar(
+          content: const Text('Profile updated successfully'),
+          backgroundColor: widget.isDarkTheme ? const Color(0xFF388E3C) : Colors.green,
         ),
       );
     } catch (e) {
@@ -119,7 +137,7 @@ class _ProfilePageState extends State<ProfilePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: const Color(0xFFD32F2F),
+        backgroundColor: widget.isDarkTheme ? const Color(0xFFD32F2F) : Colors.red,
       ),
     );
   }
@@ -144,18 +162,18 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1628),
+      backgroundColor: _backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A1628),
+        backgroundColor: _appBarColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: _iconColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Profile',
           style: TextStyle(
-            color: Colors.white,
+            color: _textColor,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -163,7 +181,7 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           if (!_isEditing && !_isLoading)
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.white),
+              icon: Icon(Icons.edit, color: _iconColor),
               onPressed: () {
                 setState(() {
                   _isEditing = true;
@@ -173,9 +191,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                color: Color(0xFFE53E3E),
+                color: _accentColor,
               ),
             )
           : _buildProfileContent(),
@@ -207,11 +225,11 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A243A),
+        color: _cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: widget.isDarkTheme ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -223,9 +241,9 @@ class _ProfilePageState extends State<ProfilePage> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFFE53E3E),
+              color: _accentColor,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
+              border: Border.all(color: widget.isDarkTheme ? Colors.white : Colors.grey[300]!, width: 3),
             ),
             child: const Icon(
               Icons.person,
@@ -240,8 +258,8 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Text(
                   '${_userProfile.firstName} ${_userProfile.lastName}'.trim(),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: _textColor,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -252,7 +270,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Text(
                   _userProfile.email,
                   style: TextStyle(
-                    color: Colors.grey[400],
+                    color: _secondaryTextColor,
                     fontSize: 14,
                   ),
                   maxLines: 1,
@@ -264,7 +282,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Text(
                       _userProfile.phone!,
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: _secondaryTextColor,
                         fontSize: 14,
                       ),
                     ),
@@ -283,16 +301,16 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A243A),
+          color: _cardColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Personal Information',
               style: TextStyle(
-                color: Colors.white,
+                color: _textColor,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -380,16 +398,16 @@ class _ProfilePageState extends State<ProfilePage> {
             // Account Created Date
             if (_userProfile.createdAt != null) ...[
               const SizedBox(height: 20),
-              const Divider(color: Color(0xFF2D3748)),
+              Divider(color: _dividerColor),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Icon(Icons.calendar_today, color: Colors.grey[400], size: 20),
+                  Icon(Icons.calendar_today, color: _secondaryTextColor, size: 20),
                   const SizedBox(width: 12),
                   Text(
                     'Member since ${_formatDate(_userProfile.createdAt!)}',
                     style: TextStyle(
-                      color: Colors.grey[400],
+                      color: _secondaryTextColor,
                       fontSize: 14,
                     ),
                   ),
@@ -415,31 +433,36 @@ class _ProfilePageState extends State<ProfilePage> {
       enabled: isEnabled,
       keyboardType: keyboardType,
       validator: validator,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: _textColor),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.grey[400]),
-        prefixIcon: Icon(icon, color: Colors.grey[400]),
+        labelStyle: TextStyle(color: _secondaryTextColor),
+        prefixIcon: Icon(icon, color: _secondaryTextColor),
         enabled: isEnabled,
         filled: true,
-        fillColor: isEnabled ? const Color(0xFF2D3748) : const Color(0xFF1A243A),
+        fillColor: isEnabled ? _enabledFieldColor : _disabledFieldColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2D3748)),
+          borderSide: BorderSide(color: _fieldBorderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE53E3E)),
+          borderSide: BorderSide(color: _accentColor),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFD32F2F)),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFD32F2F)),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        hintStyle: TextStyle(color: _secondaryTextColor),
       ),
     );
   }
@@ -451,8 +474,8 @@ class _ProfilePageState extends State<ProfilePage> {
           child: ElevatedButton(
             onPressed: _cancelEdit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2D3748),
-              foregroundColor: Colors.white,
+              backgroundColor: _cancelButtonColor,
+              foregroundColor: _cancelButtonTextColor,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -466,7 +489,7 @@ class _ProfilePageState extends State<ProfilePage> {
           child: ElevatedButton(
             onPressed: _saveProfile,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE53E3E),
+              backgroundColor: _accentColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
