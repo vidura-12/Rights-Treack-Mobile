@@ -263,22 +263,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   colors: [_accentColor, _accentLight],
                 ),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                    child: const CircleAvatar(
-                      radius: 35,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.person, color: Color(0xFF6366F1), size: 35),
-                    ),
-                  ),
-                ],
-              ),
+             
             ),
             Expanded(
               child: ListView(
