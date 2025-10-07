@@ -2,7 +2,6 @@
 // Extended with summarization support + UI for summary fields
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -105,7 +104,7 @@ class _MediaPageState extends State<MediaPage> {
       }
     } else {
       final List<XFile> files = await _picker.pickMultiImage();
-      if (files != null && files.isNotEmpty) {
+      if (files.isNotEmpty) {
         setState(() {
           _selectedPaths = files.map((f) => f.path).toList();
         });
@@ -149,7 +148,7 @@ class _MediaPageState extends State<MediaPage> {
     final actions = lower.contains('reported') ? 'Reported' : '';
 
     String short = text;
-    if (short.length > 150) short = short.substring(0, 150) + '...';
+    if (short.length > 150) short = '${short.substring(0, 150)}...';
 
     return {
       'case_type': caseType,
@@ -356,7 +355,7 @@ class _MediaPageState extends State<MediaPage> {
                                       const EdgeInsets.symmetric(vertical: 2),
                                   child: Text("💬 $c"),
                                 ))
-                            .toList(),
+                            ,
                       ],
                     ),
                   ),

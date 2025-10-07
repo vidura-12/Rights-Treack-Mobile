@@ -5,7 +5,9 @@ import 'package:human_rights_tracker/core/routes.dart';
 import 'report_case_page.dart';
 import 'media.dart';
 import 'text.dart';
-import 'case_list_page.dart'; // ✅ Import CaseListPage
+import 'case_list_page.dart';
+import 'package:human_rights_tracker/features/notifications/notification_panel.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,11 +16,23 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   final List<bool> _sidebarSelections = List.filled(11, false);
   bool _showNotifications = false;
   int _unreadNotifications = 0;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  bool _isDarkTheme = true; 
+
+  // Theme colors
+  final Color _darkBackground = const Color(0xFF0A1628);
+  final Color _darkCard = const Color(0xFF1A243A);
+  final Color _darkAppBar = const Color(0xFF0A1628);
+  final Color _accentColor = const Color(0xFFE53E3E);
+  final Color _lightBackground = Color.fromARGB(255, 255, 255, 255);
+  final Color _lightCard = Color.fromARGB(255, 250, 250, 250);
+  final Color _lightAppBar = Color.fromARGB(255, 255, 255, 255);
 
   // Pages for bottom navigation
   final List<Widget> _pages = [
@@ -33,12 +47,27 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _sidebarSelections[0] = true; // Home selected by default
+    
+    // Animation controller for smooth notification panel
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    
     _loadUnreadNotificationsCount();
   }
 
   Future<void> _loadUnreadNotificationsCount() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final snapshot = await FirebaseFirestore.instance
         .collection('notifications')
+        .where('reportedBy', isEqualTo: user.email)
         .where('read', isEqualTo: false)
         .get();
 
@@ -47,24 +76,64 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _toggleNotifications() {
+    setState(() {
+      _showNotifications = !_showNotifications;
+      if (_showNotifications) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  void _toggleTheme() {
+    setState(() {
+      _isDarkTheme = !_isDarkTheme;
+    });
+  }
+
+  void _onMarkAllAsRead() {
+    _loadUnreadNotificationsCount();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  // Get current theme colors
+  Color get _backgroundColor => _isDarkTheme ? _darkBackground : _lightBackground;
+  Color get _cardColor => _isDarkTheme ? _darkCard : _lightCard;
+  Color get _appBarColor => _isDarkTheme ? _darkAppBar : _lightAppBar;
+  Color get _textColor => _isDarkTheme ? Colors.white : Colors.black87;
+  Color get _secondaryTextColor => _isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
+  Color get _iconColor => _isDarkTheme ? Colors.white : Colors.black87;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: _backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A1628),
+        backgroundColor: _appBarColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color.fromARGB(255, 204, 204, 204)),
+        iconTheme: IconThemeData(color: _iconColor),
         actions: [
+          // Theme Toggle Button
+          IconButton(
+            icon: Icon(
+              _isDarkTheme ? Icons.light_mode : Icons.dark_mode,
+              color: _iconColor,
+            ),
+            onPressed: _toggleTheme,
+          ),
+          // Notifications Button
           Stack(
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    _showNotifications = !_showNotifications;
-                  });
-                },
+                icon: Icon(Icons.notifications, color: _iconColor),
+                onPressed: _toggleNotifications,
               ),
               if (_unreadNotifications > 0)
                 Positioned(
@@ -96,10 +165,10 @@ class _HomePageState extends State<HomePage> {
         title: Flexible(
           child: Row(
             children: [
-              const Text(
+              Text(
                 'RightsTrack',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _textColor,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -109,7 +178,7 @@ class _HomePageState extends State<HomePage> {
                 child: Text(
                   'Justice Starts With Awareness',
                   style: TextStyle(
-                    color: Colors.grey[400],
+                    color: _secondaryTextColor,
                     fontSize: 12,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -130,154 +199,31 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          if (_showNotifications) _buildNotificationsPanel(),
+          
+          // Notification Panel with smooth animation
+          if (_showNotifications)
+            Positioned(
+              top: kToolbarHeight -30,
+              right: 22,
+              child: SizeTransition(
+                sizeFactor: _animation,
+                axisAlignment: -0.5,
+                child: NotificationPanel(
+                  onMarkAllAsRead: _onMarkAllAsRead,
+                  onClose: _toggleNotifications,
+                  isDarkTheme: _isDarkTheme,
+                ),
+              ),
+            ),
         ],
       ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  Widget _buildNotificationsPanel() {
-    return Positioned(
-      top: 3,
-      right: 18,
-      width: MediaQuery.of(context).size.width * 0.8,
-      child: Material(
-        elevation: 8,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.6,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A243A),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[700]!),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0A1628),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
-                  border: Border(bottom: BorderSide(color: Colors.grey[700]!)),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Notifications',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Mark all as read',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('notifications')
-                      .orderBy('timestamp', descending: true)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    }
-
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No notifications yet',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      );
-                    }
-
-                    return ListView(
-                      children: snapshot.data!.docs.map((DocumentSnapshot document) {
-                        Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-
-                        // Format timestamp
-                        String timeText = "Recently";
-                        if (data['timestamp'] != null) {
-                          final timestamp = data['timestamp'] as Timestamp;
-                          final now = DateTime.now();
-                          final difference = now.difference(timestamp.toDate());
-
-                          if (difference.inMinutes < 1) {
-                            timeText = "Just now";
-                          } else if (difference.inHours < 1) {
-                            timeText = "${difference.inMinutes} min ago";
-                          } else if (difference.inDays < 1) {
-                            timeText = "${difference.inHours} hours ago";
-                          } else {
-                            timeText = "${difference.inDays} days ago";
-                          }
-                        }
-
-                        return ListTile(
-                          leading: const Icon(Icons.notifications, color: Colors.deepPurple, size: 20),
-                          title: Text(
-                            data['title'] ?? 'Notification',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: data['read'] == true ? FontWeight.normal : FontWeight.bold,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                data['message'] ?? '',
-                                style: const TextStyle(color: Colors.grey, fontSize: 12),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                timeText,
-                                style: const TextStyle(fontSize: 10, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                          trailing: data['read'] == true
-                              ? null
-                              : const Icon(Icons.circle, color: Colors.red, size: 8),
-                          onTap: () {
-                            document.reference.update({'read': true});
-                            _loadUnreadNotificationsCount();
-                          },
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSidebar() {
     return Drawer(
-      backgroundColor: const Color(0xFF1A243A),
+      backgroundColor: _cardColor,
       child: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -289,7 +235,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(20),
-                      color: const Color(0xFF2D3748),
+                      color: _isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[200],
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -299,21 +245,21 @@ class _HomePageState extends State<HomePage> {
                             child: Icon(Icons.person, color: Colors.white, size: 30),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'Vidura NirmaI',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: _textColor,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'viduranirmai@gmail.com',
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                            style: TextStyle(color: _secondaryTextColor, fontSize: 14),
                           ),
                           const SizedBox(height: 16),
-                          Divider(color: Colors.grey[700]),
+                          Divider(color: _isDarkTheme ? Colors.grey[700] : Colors.grey[400]),
                         ],
                       ),
                     ),
@@ -322,7 +268,12 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         children: [
                           _buildSidebarItem(0, Icons.home, 'Home'),
-                          _buildSidebarItem(1, Icons.person, 'Profile'),
+                          _buildSidebarItem(1, Icons.person, 'Profile', onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ProfilePage()),
+                            );
+                          }),
                           _buildSidebarItem(2, Icons.photo_library, 'Media'),
                           _buildSidebarItem(3, Icons.contacts, 'Directory'),
                           _buildSidebarItem(4, Icons.track_changes, 'Case Tracker'),
@@ -341,7 +292,7 @@ class _HomePageState extends State<HomePage> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: IconButton(
-                icon: const Icon(Icons.logout, color: Colors.white),
+                icon: Icon(Icons.logout, color: _textColor),
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
                   Navigator.pushReplacementNamed(context, AppRoutes.login);
@@ -354,16 +305,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSidebarItem(int index, IconData icon, String title) {
+  Widget _buildSidebarItem(int index, IconData icon, String title, {VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(
         icon,
-        color: _sidebarSelections[index] ? const Color(0xFFE53E3E) : Colors.grey,
+        color: _sidebarSelections[index] ? _accentColor : _textColor,
       ),
       title: Text(
         title,
         style: TextStyle(
-          color: _sidebarSelections[index] ? const Color(0xFFE53E3E) : Colors.white,
+          color: _sidebarSelections[index] ? _accentColor : _textColor,
           fontWeight: _sidebarSelections[index] ? FontWeight.bold : FontWeight.normal,
         ),
       ),
@@ -373,18 +324,19 @@ class _HomePageState extends State<HomePage> {
           for (int i = 0; i < _sidebarSelections.length; i++) {
             _sidebarSelections[i] = i == index;
           }
-          _currentIndex = 0;
         });
         Navigator.pop(context);
-
-        if (title == 'Media') {
+        
+        if (onTap != null) {
+          onTap();
+        } else if (title == 'Media') {
           setState(() {
             _currentIndex = 4;
           });
         } else if (title == 'Case Tracker') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const CaseListPage()), // ✅ Go to CaseListPage
+            MaterialPageRoute(builder: (_) => const CaseListPage()),
           );
         }
       },
@@ -393,9 +345,9 @@ class _HomePageState extends State<HomePage> {
 
   BottomNavigationBar _buildBottomNavBar() {
     return BottomNavigationBar(
-      backgroundColor: const Color(0xFF0A1628),
-      selectedItemColor: const Color(0xFFE53E3E),
-      unselectedItemColor: Colors.grey,
+      backgroundColor: _isDarkTheme ? const Color(0xFF0A1628) : Colors.white,
+      selectedItemColor: _accentColor,
+      unselectedItemColor: _isDarkTheme ? Colors.grey : Colors.grey[600],
       currentIndex: _currentIndex,
       onTap: (index) {
         setState(() {
@@ -418,6 +370,10 @@ class HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkTheme ? const Color(0xFF0A1628) : Colors.white;
+    final textColor = isDarkTheme ? Colors.white : Colors.black87;
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: GridView.count(
@@ -446,7 +402,7 @@ class HomeContent extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CaseListPage()), // ✅ Fixed
+                MaterialPageRoute(builder: (_) => const CaseListPage()),
               );
             },
           ),
@@ -539,10 +495,13 @@ class PlaceholderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkTheme ? Colors.white : Colors.black87;
+
     return Center(
       child: Text(
         title,
-        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
       ),
     );
   }

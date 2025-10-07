@@ -442,33 +442,6 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
     }
   }
 
-  Future<void> _updateCase() async {
-    String? imageUrl = widget.caseData['imageUrl'];
-
-    if (_newImage != null) {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child("case_images")
-          .child("${widget.caseId}.jpg");
-      await ref.putFile(_newImage!);
-      imageUrl = await ref.getDownloadURL();
-    }
-
-    await FirebaseFirestore.instance
-        .collection("cases")
-        .doc(widget.caseId)
-        .update({
-      "description": descriptionController.text,
-      "category": selectedCategory,
-      "location": locationController.text,
-      "victimGender": selectedVictim,
-      "abuserGender": selectedAbuser,
-      "status": selectedStatus,
-      "imageUrl": imageUrl,
-    });
-
-    Navigator.pop(context);
-  }
 
   @override
   Widget build(BuildContext context) {

@@ -130,7 +130,6 @@ class _CaseChartsPageState extends State<CaseChartsPage> {
     );
   }
 
-  // Modern Bar Chart (scrollable if many locations)
   Widget _buildBarChart(Map<String, int> counts) {
     final colors = [Colors.deepPurple, Colors.orange, Colors.blue, Colors.green, Colors.red];
     final maxY = (counts.values.isNotEmpty ? counts.values.reduce((a, b) => a > b ? a : b) : 1).toDouble() + 1;
