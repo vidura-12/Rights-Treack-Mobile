@@ -1007,3 +1007,106 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                                     value: g,
                                     child: Text(g, style: TextStyle(color: _textColor)),
                                   ))
+                              .toList(),
+                          onChanged: (v) => setState(() => selectedVictim = v),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          dropdownColor: _cardColor,
+                          style: TextStyle(color: _textColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Abuser Gender",
+                        style: TextStyle(
+                          color: _textColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _inputBackgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _borderColor),
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          value: selectedAbuser,
+                          items: abusers
+                              .map((g) => DropdownMenuItem(
+                                    value: g,
+                                    child: Text(g, style: TextStyle(color: _textColor)),
+                                  ))
+                              .toList(),
+                          onChanged: (v) => setState(() => selectedAbuser = v),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          dropdownColor: _cardColor,
+                          style: TextStyle(color: _textColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Case Status
+            Text(
+              "Case Status",
+              style: TextStyle(
+                color: _textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: _inputBackgroundColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _borderColor),
+              ),
+              child: DropdownButtonFormField<String>(
+                value: selectedStatus,
+                items: statuses
+                    .map((s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(s, style: TextStyle(color: _textColor)),
+                        ))
+                    .toList(),
+                onChanged: (v) => setState(() => selectedStatus = v),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                dropdownColor: _cardColor,
+                style: TextStyle(color: _textColor),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    descriptionController.dispose();
+    locationController.dispose();
+    super.dispose();
+  }
+}
