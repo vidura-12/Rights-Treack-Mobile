@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../Services/auth_service.dart';
 
@@ -30,6 +31,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
   DateTime? toDate;
 
   File? _selectedImage;
+  Uint8List? _pickedBytes; // For web support
 
   final List<String> categories = [
     'Human Trafficking',
@@ -91,24 +93,135 @@ class _ReportCasePageState extends State<ReportCasePage> {
   }
 
   Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        _selectedImage = File(picked.path);
-      });
+    try {
+      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (picked != null) {
+        if (kIsWeb) {
+          // For web, read as bytes
+          final bytes = await picked.readAsBytes();
+          setState(() {
+            _pickedBytes = bytes;
+            _selectedImage = null; // Clear file reference for web
+          });
+        } else {
+          // For mobile, use file
+          setState(() {
+            _selectedImage = File(picked.path);
+            _pickedBytes = null; // Clear bytes for mobile
+          });
+        }
+      }
+    } catch (e) {
+      print("Image pick error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to pick image: $e'),
+          backgroundColor: _accentColor,
+        ),
+      );
     }
   }
 
-  Future<String?> _uploadImage(File imageFile) async {
+  // Convert image to base64 for storage
+  Future<String?> _convertImageToBase64() async {
     try {
-      final ref = FirebaseStorage.instance.ref().child(
-        "case_images/${DateTime.now().millisecondsSinceEpoch}.jpg",
-      );
-      await ref.putFile(imageFile);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      print("Image upload error: $e");
+      if (kIsWeb && _pickedBytes != null) {
+        // For web - use bytes directly
+        final base64String = base64Encode(_pickedBytes!);
+        return 'data:image/jpeg;base64,$base64String';
+      } else if (_selectedImage != null) {
+        // For mobile - read file as bytes
+        final bytes = await _selectedImage!.readAsBytes();
+        final base64String = base64Encode(bytes);
+        return 'data:image/jpeg;base64,$base64String';
+      }
       return null;
+    } catch (e) {
+      print("Base64 conversion error: $e");
+      return null;
+    }
+  }
+
+  // Helper method to display base64 images
+  Widget _buildImage(String imageUrl) {
+    if (imageUrl.startsWith('data:image')) {
+      // Base64 image
+      try {
+        final base64Data = imageUrl.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          bytes,
+          height: 150,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 150,
+              color: _inputBackgroundColor,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.broken_image,
+                    color: _secondaryTextColor,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Failed to load image',
+                    style: TextStyle(
+                      color: _secondaryTextColor,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      } catch (e) {
+        return Container(
+          height: 150,
+          color: _inputBackgroundColor,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: _secondaryTextColor,
+                size: 48,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Invalid image data',
+                style: TextStyle(
+                  color: _secondaryTextColor,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } else {
+      // Regular URL (fallback)
+      return Image.network(
+        imageUrl,
+        height: 150,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 150,
+            color: _inputBackgroundColor,
+            child: Icon(
+              Icons.broken_image,
+              color: _secondaryTextColor,
+              size: 48,
+            ),
+          );
+        },
+      );
     }
   }
 
@@ -168,9 +281,10 @@ class _ReportCasePageState extends State<ReportCasePage> {
         // Auto-generate case number
         caseNumber = "CASE-${DateTime.now().millisecondsSinceEpoch}";
 
-        String? imageUrl;
-        if (_selectedImage != null) {
-          imageUrl = await _uploadImage(_selectedImage!);
+        // Convert image to base64
+        String? imageData;
+        if (_selectedImage != null || _pickedBytes != null) {
+          imageData = await _convertImageToBase64();
         }
 
         final caseData = {
@@ -187,7 +301,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
           "reportedByEmail": userEmail,
           "status": "reported",
           "lastUpdated": FieldValue.serverTimestamp(),
-          "imageUrl": imageUrl,
+          "imageData": imageData, // Store base64 image data
         };
 
         await FirebaseFirestore.instance.collection("cases").add(caseData);
@@ -211,6 +325,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
           fromDate = null;
           toDate = null;
           _selectedImage = null;
+          _pickedBytes = null;
         });
       } catch (e) {
         String errorMessage = "Failed to save case";
@@ -468,7 +583,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
                           ),
                         ),
                       ),
-                      if (_selectedImage != null) ...[
+                      if (_selectedImage != null || _pickedBytes != null) ...[
                         const SizedBox(height: 12),
                         Container(
                           height: 150,
@@ -479,10 +594,17 @@ class _ReportCasePageState extends State<ReportCasePage> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              _selectedImage!,
-                              fit: BoxFit.cover,
-                            ),
+                            child: kIsWeb && _pickedBytes != null
+                                ? Image.memory(
+                                    _pickedBytes!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : _selectedImage != null
+                                    ? Image.file(
+                                        _selectedImage!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(),
                           ),
                         ),
                       ],
@@ -493,7 +615,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
               const SizedBox(height: 24),
 
               // Submit Button
-              Container(
+              SizedBox(
                 height: 60,
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submitForm,
@@ -575,7 +697,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
               .map(
                 (item) => DropdownMenuItem(
                   value: item,
-                  child: Container(
+                  child: SizedBox(
                     width: double.infinity, // Force full width
                     child: Text(
                       item,

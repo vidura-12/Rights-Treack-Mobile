@@ -2,6 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:human_rights_tracker/core/routes.dart';
+
 import 'package:human_rights_tracker/services/auth_service.dart';
 
 final AuthService _authService = AuthService();
