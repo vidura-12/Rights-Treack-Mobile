@@ -25,6 +25,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late Animation<double> _animation;
   bool _isDarkTheme = true;
 
+
   // Modern theme colors
   final Color _darkBackground = const Color(0xFF0F1419);
   final Color _darkCard = const Color(0xFF1C2128);

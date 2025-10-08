@@ -7,7 +7,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 class MediaPage extends StatefulWidget {
   final bool isDarkTheme;
@@ -69,25 +68,109 @@ class _MediaPageState extends State<MediaPage> {
   Future<List<String>> _uploadImages() async {
     List<String> imageUrls = [];
     
-    if (kIsWeb && _pickedBytes != null) {
-      for (int i = 0; i < _pickedBytes!.length; i++) {
-        final fileName = 'posts/${currentUser!.uid}/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
-        final ref = FirebaseStorage.instance.ref().child(fileName);
-        await ref.putData(_pickedBytes![i]);
-        final url = await ref.getDownloadURL();
-        imageUrls.add(url);
+    try {
+      if (kIsWeb && _pickedBytes != null) {
+        for (int i = 0; i < _pickedBytes!.length; i++) {
+          // Convert to base64
+          final base64String = base64Encode(_pickedBytes![i]);
+          // Store as data URL
+          imageUrls.add('data:image/jpeg;base64,$base64String');
+        }
+      } else if (_selectedPaths != null) {
+        for (int i = 0; i < _selectedPaths!.length; i++) {
+          final bytes = await File(_selectedPaths![i]).readAsBytes();
+          final base64String = base64Encode(bytes);
+          imageUrls.add('data:image/jpeg;base64,$base64String');
+        }
       }
-    } else if (_selectedPaths != null) {
-      for (int i = 0; i < _selectedPaths!.length; i++) {
-        final fileName = 'posts/${currentUser!.uid}/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
-        final ref = FirebaseStorage.instance.ref().child(fileName);
-        await ref.putFile(File(_selectedPaths![i]));
-        final url = await ref.getDownloadURL();
-        imageUrls.add(url);
-      }
+    } catch (e) {
+      debugPrint('Base64 conversion error: $e');
     }
     
     return imageUrls;
+  }
+
+  // Helper method to display base64 images
+  Widget _buildImage(String imageUrl) {
+    if (imageUrl.startsWith('data:image')) {
+      // Base64 image
+      try {
+        final base64Data = imageUrl.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          bytes,
+          height: 250,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 250,
+              color: _chipBackgroundColor,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.broken_image,
+                    color: _secondaryTextColor,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Failed to load image',
+                    style: TextStyle(
+                      color: _secondaryTextColor,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      } catch (e) {
+        return Container(
+          height: 250,
+          color: _chipBackgroundColor,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: _secondaryTextColor,
+                size: 48,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Invalid image data',
+                style: TextStyle(
+                  color: _secondaryTextColor,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } else {
+      // Regular URL (fallback)
+      return Image.network(
+        imageUrl,
+        height: 250,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 250,
+            color: _chipBackgroundColor,
+            child: Icon(
+              Icons.broken_image,
+              color: _secondaryTextColor,
+              size: 48,
+            ),
+          );
+        },
+      );
+    }
   }
 
   Future<Map<String, String>> _summarizeDescription(String text) async {
@@ -591,24 +674,11 @@ class _MediaPageState extends State<MediaPage> {
           // Images
           if (imageUrls.isNotEmpty) ...[
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                imageUrls.first,
-                height: 250,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 250,
-                    color: _chipBackgroundColor,
-                    child: Icon(
-                      Icons.broken_image,
-                      color: _secondaryTextColor,
-                      size: 48,
-                    ),
-                  );
-                },
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _buildImage(imageUrls.first),
               ),
             ),
           ],
@@ -690,6 +760,8 @@ class _MediaPageState extends State<MediaPage> {
       ),
     );
   }
+
+  // ... rest of your methods remain the same (_buildSummaryChips, _buildChip, _formatTimestamp, _showPostDialog, _showCommentsSheet, dispose)
 
   Widget _buildSummaryChips(Map<String, dynamic> summary) {
     if (summary.isEmpty) return const SizedBox.shrink();
