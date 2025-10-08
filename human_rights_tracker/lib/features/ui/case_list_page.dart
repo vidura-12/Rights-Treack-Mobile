@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -931,7 +932,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                 border: Border.all(color: _borderColor),
               ),
               child: DropdownButtonFormField<String>(
-                value: selectedCategory,
+                initialValue: selectedCategory,
                 items: categories
                     .map((c) => DropdownMenuItem(
                           value: c,
@@ -1001,7 +1002,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                           border: Border.all(color: _borderColor),
                         ),
                         child: DropdownButtonFormField<String>(
-                          value: selectedVictim,
+                          initialValue: selectedVictim,
                           items: genders
                               .map((g) => DropdownMenuItem(
                                     value: g,
@@ -1041,7 +1042,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                           border: Border.all(color: _borderColor),
                         ),
                         child: DropdownButtonFormField<String>(
-                          value: selectedAbuser,
+                          initialValue: selectedAbuser,
                           items: abusers
                               .map((g) => DropdownMenuItem(
                                     value: g,
@@ -1081,7 +1082,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                 border: Border.all(color: _borderColor),
               ),
               child: DropdownButtonFormField<String>(
-                value: selectedStatus,
+                initialValue: selectedStatus,
                 items: statuses
                     .map((s) => DropdownMenuItem(
                           value: s,

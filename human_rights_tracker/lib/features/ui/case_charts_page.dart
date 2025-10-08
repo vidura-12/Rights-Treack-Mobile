@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class CaseChartsPage extends StatefulWidget {
-  const CaseChartsPage({super.key});
+  const CaseChartsPage({super.key, required bool isDarkTheme});
 
   @override
   State<CaseChartsPage> createState() => _CaseChartsPageState();

@@ -40,7 +40,7 @@ class AppRoutes {
       case displayCase:
         return MaterialPageRoute(builder: (_) => const CaseListPage());
       case displayChart:
-        return MaterialPageRoute(builder: (_) => const CaseChartsPage());
+        return MaterialPageRoute(builder: (_) => const CaseChartsPage(isDarkTheme: true,));
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
