@@ -184,16 +184,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ],
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_accentColor, _accentLight],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.verified_user, color: Colors.white, size: 20),
-            ),
+            
             const SizedBox(width: 12),
             Flexible(
               child: Column(
@@ -499,7 +490,7 @@ class HomeContent extends StatelessWidget {
                   Expanded(
                     child: _buildCompactCard(
                       context,
-                      'Get Support',
+                      'Get AI Support',
                       Icons.chat_outlined,
                       const LinearGradient(
                         colors: [Color(0xFF10B981), Color(0xFF059669)],

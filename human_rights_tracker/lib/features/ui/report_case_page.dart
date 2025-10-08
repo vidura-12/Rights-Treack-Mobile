@@ -493,7 +493,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
               const SizedBox(height: 24),
 
               // Submit Button
-              Container(
+              SizedBox(
                 height: 60,
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submitForm,
@@ -575,7 +575,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
               .map(
                 (item) => DropdownMenuItem(
                   value: item,
-                  child: Container(
+                  child: SizedBox(
                     width: double.infinity, // Force full width
                     child: Text(
                       item,

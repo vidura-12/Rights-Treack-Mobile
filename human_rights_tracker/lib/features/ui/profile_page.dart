@@ -55,7 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final doc = await _firestore
           .collection('users')
-          .doc(_currentUser!.uid)
+          .doc(_currentUser.uid)
           .get();
 
       if (doc.exists) {
@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
         // Create default profile if doesn't exist
         setState(() {
           _userProfile = UserProfile(
-            email: _currentUser!.email ?? '',
+            email: _currentUser.email ?? '',
             firstName: '',
             lastName: '',
           );
@@ -110,7 +110,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       await _firestore
           .collection('users')
-          .doc(_currentUser!.uid)
+          .doc(_currentUser.uid)
           .set(updatedProfile.toFirestore(), SetOptions(merge: true));
 
       setState(() {
