@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,19 +24,24 @@ class _CaseListPageState extends State<CaseListPage> {
     'Investigation',
     'In Court',
     'Resolved',
-    'Closed'
+    'Closed',
   ];
 
   // Theme colors
-  Color get _backgroundColor => _isDarkTheme ? const Color(0xFF0F1419) : const Color(0xFFF8FAFC);
+  Color get _backgroundColor =>
+      _isDarkTheme ? const Color(0xFF0F1419) : const Color(0xFFF8FAFC);
   Color get _cardColor => _isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
-  Color get _appBarColor => _isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
+  Color get _appBarColor =>
+      _isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
   Color get _textColor => _isDarkTheme ? Colors.white : Colors.black87;
-  Color get _secondaryTextColor => _isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
+  Color get _secondaryTextColor =>
+      _isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
   Color get _iconColor => _isDarkTheme ? Colors.white : Colors.black87;
   Color get _accentColor => const Color(0xFF6366F1);
-  Color get _inputBackgroundColor => _isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[100]!;
-  Color get _chipBackgroundColor => _isDarkTheme ? const Color(0xFF2D3748) : const Color(0xFFF1F5F9);
+  Color get _inputBackgroundColor =>
+      _isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[100]!;
+  Color get _chipBackgroundColor =>
+      _isDarkTheme ? const Color(0xFF2D3748) : const Color(0xFFF1F5F9);
 
   void _toggleTheme() {
     setState(() {
@@ -56,18 +62,11 @@ class _CaseListPageState extends State<CaseListPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.camera_alt,
-              color: _secondaryTextColor,
-              size: 50,
-            ),
+            Icon(Icons.camera_alt, color: _secondaryTextColor, size: 50),
             const SizedBox(height: 8),
             Text(
               'No Image',
-              style: TextStyle(
-                color: _secondaryTextColor,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: _secondaryTextColor, fontSize: 14),
             ),
           ],
         ),
@@ -125,18 +124,11 @@ class _CaseListPageState extends State<CaseListPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                color: _secondaryTextColor,
-                size: 48,
-              ),
+              Icon(Icons.error_outline, color: _secondaryTextColor, size: 48),
               const SizedBox(height: 8),
               Text(
                 'Invalid image data',
-                style: TextStyle(
-                  color: _secondaryTextColor,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: _secondaryTextColor, fontSize: 14),
               ),
             ],
           ),
@@ -169,10 +161,7 @@ class _CaseListPageState extends State<CaseListPage> {
                   const SizedBox(height: 8),
                   Text(
                     'Failed to load image',
-                    style: TextStyle(
-                      color: _secondaryTextColor,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: _secondaryTextColor, fontSize: 14),
                   ),
                 ],
               ),
@@ -193,10 +182,7 @@ class _CaseListPageState extends State<CaseListPage> {
       appBar: AppBar(
         title: Text(
           "My Reported Cases",
-          style: TextStyle(
-            color: _textColor,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: _textColor, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: _appBarColor,
@@ -235,7 +221,10 @@ class _CaseListPageState extends State<CaseListPage> {
                   filled: true,
                   fillColor: Colors.transparent,
                   prefixIcon: Icon(Icons.search, color: _secondaryTextColor),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0,
+                    horizontal: 16,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(25),
                     borderSide: BorderSide.none,
@@ -272,10 +261,7 @@ class _CaseListPageState extends State<CaseListPage> {
                   const SizedBox(height: 16),
                   Text(
                     "You must be logged in to view cases.",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: _secondaryTextColor,
-                    ),
+                    style: TextStyle(fontSize: 16, color: _secondaryTextColor),
                   ),
                 ],
               ),
@@ -412,9 +398,11 @@ class _CaseListPageState extends State<CaseListPage> {
                     final status = caseData['status'] ?? 'Open';
 
                     final currentStep = statuses.indexWhere(
-                        (s) => s.toLowerCase() == status.toLowerCase());
-                    final progress =
-                        currentStep >= 0 ? (currentStep + 1) / statuses.length : 0.0;
+                      (s) => s.toLowerCase() == status.toLowerCase(),
+                    );
+                    final progress = currentStep >= 0
+                        ? (currentStep + 1) / statuses.length
+                        : 0.0;
 
                     return Container(
                       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -440,12 +428,18 @@ class _CaseListPageState extends State<CaseListPage> {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: _getStatusColor(status).withOpacity(0.15),
+                                    color: _getStatusColor(
+                                      status,
+                                    ).withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: _getStatusColor(status).withOpacity(0.3),
+                                      color: _getStatusColor(
+                                        status,
+                                      ).withOpacity(0.3),
                                     ),
                                   ),
                                   child: Text(
@@ -460,7 +454,10 @@ class _CaseListPageState extends State<CaseListPage> {
                                 Row(
                                   children: [
                                     IconButton(
-                                      icon: Icon(Icons.edit, color: _accentColor),
+                                      icon: Icon(
+                                        Icons.edit,
+                                        color: _accentColor,
+                                      ),
                                       onPressed: () {
                                         Navigator.push(
                                           context,
@@ -475,7 +472,10 @@ class _CaseListPageState extends State<CaseListPage> {
                                       },
                                     ),
                                     IconButton(
-                                      icon: Icon(Icons.delete, color: Colors.red),
+                                      icon: Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
                                       onPressed: () async {
                                         final confirm = await showDialog<bool>(
                                           context: context,
@@ -483,25 +483,35 @@ class _CaseListPageState extends State<CaseListPage> {
                                             backgroundColor: _cardColor,
                                             title: Text(
                                               "Delete Case",
-                                              style: TextStyle(color: _textColor),
+                                              style: TextStyle(
+                                                color: _textColor,
+                                              ),
                                             ),
                                             content: Text(
                                               "Are you sure you want to delete this case?",
-                                              style: TextStyle(color: _secondaryTextColor),
+                                              style: TextStyle(
+                                                color: _secondaryTextColor,
+                                              ),
                                             ),
                                             actions: [
                                               TextButton(
-                                                onPressed: () => Navigator.pop(ctx, false),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
                                                 child: Text(
                                                   "Cancel",
-                                                  style: TextStyle(color: _secondaryTextColor),
+                                                  style: TextStyle(
+                                                    color: _secondaryTextColor,
+                                                  ),
                                                 ),
                                               ),
                                               TextButton(
-                                                onPressed: () => Navigator.pop(ctx, true),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
                                                 child: const Text(
                                                   "Delete",
-                                                  style: TextStyle(color: Colors.red),
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -552,7 +562,10 @@ class _CaseListPageState extends State<CaseListPage> {
                                         shape: BoxShape.circle,
                                         border: isCompleted
                                             ? null
-                                            : Border.all(color: _secondaryTextColor.withOpacity(0.3)),
+                                            : Border.all(
+                                                color: _secondaryTextColor
+                                                    .withOpacity(0.3),
+                                              ),
                                       ),
                                       child: isCompleted
                                           ? Icon(
@@ -590,25 +603,30 @@ class _CaseListPageState extends State<CaseListPage> {
                             _buildInfoRow(
                               icon: Icons.location_on,
                               iconColor: Colors.redAccent,
-                              text: caseData['location'] ?? 'Location not specified',
+                              text:
+                                  caseData['location'] ??
+                                  'Location not specified',
                             ),
                             const SizedBox(height: 8),
                             _buildInfoRow(
                               icon: Icons.person,
                               iconColor: Colors.blue,
-                              text: "Victim: ${caseData['victimGender'] ?? 'Not specified'}",
+                              text:
+                                  "Victim: ${caseData['victimGender'] ?? 'Not specified'}",
                             ),
                             const SizedBox(height: 8),
                             _buildInfoRow(
                               icon: Icons.person_off,
                               iconColor: Colors.orange,
-                              text: "Abuser: ${caseData['abuserGender'] ?? 'Not specified'}",
+                              text:
+                                  "Abuser: ${caseData['abuserGender'] ?? 'Not specified'}",
                             ),
                             const SizedBox(height: 8),
                             _buildInfoRow(
                               icon: Icons.date_range,
                               iconColor: Colors.green,
-                              text: "From: ${_formatDate(caseData['fromDate'])}\nTo: ${_formatDate(caseData['toDate'])}",
+                              text:
+                                  "From: ${_formatDate(caseData['fromDate'])}\nTo: ${_formatDate(caseData['toDate'])}",
                               isMultiLine: true,
                             ),
                           ],
@@ -629,8 +647,9 @@ class _CaseListPageState extends State<CaseListPage> {
     bool isMultiLine = false,
   }) {
     return Row(
-      crossAxisAlignment:
-      isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: isMultiLine
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
         Container(
           padding: const EdgeInsets.all(6),
@@ -724,10 +743,15 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
     'Rape',
     'Domestic Abuse',
     'Jungle Justice',
-    'Other Abuses'
+    'Other Abuses',
   ];
 
-  final List<String> genders = ['Male', 'Female', 'Non-binary', 'Prefer not to Say'];
+  final List<String> genders = [
+    'Male',
+    'Female',
+    'Non-binary',
+    'Prefer not to Say',
+  ];
   final List<String> abusers = ['Male', 'Female', 'Prefer not to Say'];
 
   final List<String> statuses = [
@@ -736,7 +760,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
     'Investigation',
     'In Court',
     'Resolved',
-    'Closed'
+    'Closed',
   ];
 
   String? selectedCategory;
@@ -745,21 +769,31 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
   String? selectedStatus;
 
   // Theme colors
-  Color get _backgroundColor => widget.isDarkTheme ? const Color(0xFF0F1419) : const Color(0xFFF8FAFC);
-  Color get _cardColor => widget.isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
-  Color get _appBarColor => widget.isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
+  Color get _backgroundColor =>
+      widget.isDarkTheme ? const Color(0xFF0F1419) : const Color(0xFFF8FAFC);
+  Color get _cardColor =>
+      widget.isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
+  Color get _appBarColor =>
+      widget.isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
   Color get _textColor => widget.isDarkTheme ? Colors.white : Colors.black87;
-  Color get _secondaryTextColor => widget.isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
+  Color get _secondaryTextColor =>
+      widget.isDarkTheme ? Colors.grey[400]! : Colors.grey[600]!;
   Color get _iconColor => widget.isDarkTheme ? Colors.white : Colors.black87;
   Color get _accentColor => const Color(0xFF6366F1);
-  Color get _inputBackgroundColor => widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[100]!;
-  Color get _borderColor => widget.isDarkTheme ? const Color(0xFF374151) : Colors.grey[300]!;
+  Color get _inputBackgroundColor =>
+      widget.isDarkTheme ? const Color(0xFF2D3748) : Colors.grey[100]!;
+  Color get _borderColor =>
+      widget.isDarkTheme ? const Color(0xFF374151) : Colors.grey[300]!;
 
   @override
   void initState() {
     super.initState();
-    descriptionController = TextEditingController(text: widget.caseData['description'] ?? '');
-    locationController = TextEditingController(text: widget.caseData['location'] ?? '');
+    descriptionController = TextEditingController(
+      text: widget.caseData['description'] ?? '',
+    );
+    locationController = TextEditingController(
+      text: widget.caseData['location'] ?? '',
+    );
     selectedCategory = widget.caseData['category'];
     selectedVictim = widget.caseData['victimGender'];
     selectedAbuser = widget.caseData['abuserGender'];
@@ -796,26 +830,48 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
   // Helper method to display images
   Widget _buildImage() {
     if (_newImage != null) {
-      return Image.file(_newImage!, height: 200, width: double.infinity, fit: BoxFit.cover);
+      return Image.file(
+        _newImage!,
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
     } else if (_pickedBytes != null) {
-      return Image.memory(_pickedBytes!, height: 200, width: double.infinity, fit: BoxFit.cover);
-    } else if (widget.caseData['imageData'] != null && widget.caseData['imageData'].isNotEmpty) {
+      return Image.memory(
+        _pickedBytes!,
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
+    } else if (widget.caseData['imageData'] != null &&
+        widget.caseData['imageData'].isNotEmpty) {
       // Base64 image from Firestore
       final imageData = widget.caseData['imageData'];
       if (imageData.startsWith('data:image')) {
         try {
           final base64Data = imageData.split(',').last;
           final bytes = base64Decode(base64Data);
-          return Image.memory(bytes, height: 200, width: double.infinity, fit: BoxFit.cover);
+          return Image.memory(
+            bytes,
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          );
         } catch (e) {
           return _buildPlaceholderImage();
         }
       }
-    } else if (widget.caseData['imageUrl'] != null && widget.caseData['imageUrl'].isNotEmpty) {
+    } else if (widget.caseData['imageUrl'] != null &&
+        widget.caseData['imageUrl'].isNotEmpty) {
       // Fallback for old imageUrl format
-      return Image.network(widget.caseData['imageUrl'], height: 200, width: double.infinity, fit: BoxFit.cover);
+      return Image.network(
+        widget.caseData['imageUrl'],
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
     }
-    
+
     return _buildPlaceholderImage();
   }
 
@@ -848,10 +904,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
       appBar: AppBar(
         title: Text(
           "Case Details",
-          style: TextStyle(
-            color: _textColor,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: _textColor, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: _appBarColor,
@@ -864,7 +917,10 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => CaseChartsPage(isDarkTheme: widget.isDarkTheme)),
+                MaterialPageRoute(
+                  builder: (_) =>
+                      CaseChartsPage(isDarkTheme: widget.isDarkTheme),
+                ),
               );
             },
           ),
@@ -931,17 +987,28 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                 border: Border.all(color: _borderColor),
               ),
               child: DropdownButtonFormField<String>(
-                value: selectedCategory,
-                items: categories
-                    .map((c) => DropdownMenuItem(
-                          value: c,
-                          child: Text(c, style: TextStyle(color: _textColor)),
-                        ))
+                isExpanded: true,
+                value: genders.contains(selectedVictim) ? selectedVictim : null,
+                hint: Text(
+                  "Select Victim Gender",
+                  style: TextStyle(color: _secondaryTextColor),
+                ),
+                items: genders
+                    .map(
+                      (gender) => DropdownMenuItem(
+                        value: gender,
+                        child: Text(
+                          gender,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: _textColor),
+                        ),
+                      ),
+                    )
                     .toList(),
-                onChanged: (v) => setState(() => selectedCategory = v),
+                onChanged: (value) => setState(() => selectedVictim = value),
                 decoration: InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
                 ),
                 dropdownColor: _cardColor,
                 style: TextStyle(color: _textColor),
@@ -1001,17 +1068,32 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                           border: Border.all(color: _borderColor),
                         ),
                         child: DropdownButtonFormField<String>(
-                          value: selectedVictim,
+                          value: genders.contains(selectedVictim)
+                              ? selectedVictim
+                              : null,
+                          hint: Text(
+                            "Select Victim Gender",
+                            style: TextStyle(color: _secondaryTextColor),
+                          ),
                           items: genders
-                              .map((g) => DropdownMenuItem(
-                                    value: g,
-                                    child: Text(g, style: TextStyle(color: _textColor)),
-                                  ))
+                              .map(
+                                (gender) => DropdownMenuItem(
+                                  value: gender,
+                                  child: Text(
+                                    gender,
+                                    style: TextStyle(color: _textColor),
+                                  ),
+                                ),
+                              )
                               .toList(),
-                          onChanged: (v) => setState(() => selectedVictim = v),
+                          onChanged: (value) {
+                            setState(() => selectedVictim = value);
+                          },
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
                           ),
                           dropdownColor: _cardColor,
                           style: TextStyle(color: _textColor),
@@ -1041,17 +1123,32 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                           border: Border.all(color: _borderColor),
                         ),
                         child: DropdownButtonFormField<String>(
-                          value: selectedAbuser,
-                          items: abusers
-                              .map((g) => DropdownMenuItem(
-                                    value: g,
-                                    child: Text(g, style: TextStyle(color: _textColor)),
-                                  ))
+                          value: genders.contains(selectedAbuser)
+                              ? selectedAbuser
+                              : null,
+                          hint: Text(
+                            "Select Abuser Gender",
+                            style: TextStyle(color: _secondaryTextColor),
+                          ),
+                          items: genders
+                              .map(
+                                (gender) => DropdownMenuItem(
+                                  value: gender,
+                                  child: Text(
+                                    gender,
+                                    style: TextStyle(color: _textColor),
+                                  ),
+                                ),
+                              )
                               .toList(),
-                          onChanged: (v) => setState(() => selectedAbuser = v),
+                          onChanged: (value) {
+                            setState(() => selectedAbuser = value);
+                          },
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
                           ),
                           dropdownColor: _cardColor,
                           style: TextStyle(color: _textColor),
@@ -1081,17 +1178,30 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                 border: Border.all(color: _borderColor),
               ),
               child: DropdownButtonFormField<String>(
-                value: selectedStatus,
+                value: statuses.contains(selectedStatus)
+                    ? selectedStatus
+                    : null,
+                hint: Text(
+                  "Select Case Status",
+                  style: TextStyle(color: _secondaryTextColor),
+                ),
                 items: statuses
-                    .map((s) => DropdownMenuItem(
-                          value: s,
-                          child: Text(s, style: TextStyle(color: _textColor)),
-                        ))
+                    .map(
+                      (status) => DropdownMenuItem(
+                        value: status,
+                        child: Text(
+                          status,
+                          style: TextStyle(color: _textColor),
+                        ),
+                      ),
+                    )
                     .toList(),
-                onChanged: (v) => setState(() => selectedStatus = v),
+                onChanged: (value) {
+                  setState(() => selectedStatus = value);
+                },
                 decoration: InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
                 ),
                 dropdownColor: _cardColor,
                 style: TextStyle(color: _textColor),

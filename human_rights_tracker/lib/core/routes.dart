@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:human_rights_tracker/features/ui/SupportersLoginPage%20.dart';
 import '../features/ui/landing_page.dart';
 import '../features/auth/login_page.dart';
 import '../features/auth/SignUpPage.dart';
@@ -12,6 +13,7 @@ import '../features/ui/case_charts_page.dart';
 class AppRoutes {
   static const String landing = '/';
   static const String login = '/login';
+  static const String loginAdmin = '/loginAdmin';
   static const String signup = '/signup';
   static const String home = '/home';
   static const String media = '/media';
@@ -40,7 +42,9 @@ class AppRoutes {
       case displayCase:
         return MaterialPageRoute(builder: (_) => const CaseListPage());
       case displayChart:
-        return MaterialPageRoute(builder: (_) => const CaseChartsPage());
+        return MaterialPageRoute(builder: (_) => const CaseChartsPage(isDarkTheme: true,));
+      case loginAdmin:
+        return MaterialPageRoute(builder: (_) => const SupportersLoginPage(isDarkTheme: true,));
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

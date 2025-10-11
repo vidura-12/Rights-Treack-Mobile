@@ -8,7 +8,7 @@ import 'text.dart';
 import 'case_list_page.dart';
 import 'package:human_rights_tracker/features/notifications/notification_panel.dart';
 import 'profile_page.dart';
-
+import 'SupportersLoginPage .dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -276,7 +276,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     );
                   }),
                   const Divider(height: 32),
-                  _buildSidebarItem(5, Icons.people_outline, 'Supporters'),
+                 _buildSidebarItem(5, Icons.people_outline, 'Supporters', onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SupportersLoginPage(isDarkTheme: _isDarkTheme),
+                      ),
+                    );
+                  }),
                   _buildSidebarItem(6, Icons.info_outline, 'About Us'),
                   _buildSidebarItem(7, Icons.mail_outline, 'Contact Us'),
                   _buildSidebarItem(8, Icons.privacy_tip_outlined, 'Privacy Policy'),
