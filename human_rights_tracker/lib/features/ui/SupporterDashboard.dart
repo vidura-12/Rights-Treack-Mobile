@@ -14,6 +14,8 @@ class SupporterDashboard extends StatefulWidget {
 class _SupporterDashboardState extends State<SupporterDashboard> {
   String _selectedFilter = 'all';
   String _searchQuery = '';
+  String _currentUserEmail = '';
+  bool _isSupporter = false;
 
   // Modern theme colors
   Color get _backgroundColor => widget.isDarkTheme ? const Color(0xFF0F1419) : const Color(0xFFF8FAFC);
@@ -24,6 +26,7 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
   Color get _inputBackgroundColor => widget.isDarkTheme ? const Color(0xFF1C2128) : Colors.white;
 
   final List<String> _statuses = [
+    'reported',
     'open',
     'in progress',
     'investigation',
@@ -32,8 +35,30 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
     'closed',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _currentUserEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+  }
+
+  void _initializeUser() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _currentUserEmail = user.email ?? '';
+      _isSupporter = _checkIfSupporter(_currentUserEmail);
+    }
+  }
+    bool _checkIfSupporter(String email) {
+    return email.contains('support') || 
+           email.contains('admin') ||
+           email.endsWith('@support.org') ||
+           email.endsWith('@admin.org') ||
+           email == 'viduranirmal1@gmail.com'; // Add your test emails
+  }
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
+      case 'reported':
+        return const Color(0xFF8B5CF6);
       case 'open':
         return const Color(0xFFF59E0B);
       case 'in progress':
@@ -53,6 +78,8 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
 
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
+      case 'reported':
+        return Icons.report;
       case 'open':
         return Icons.folder_open;
       case 'in progress':
@@ -93,7 +120,7 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
               ),
             ),
             Text(
-              FirebaseAuth.instance.currentUser?.email ?? '',
+              _currentUserEmail,
               style: TextStyle(
                 color: _secondaryTextColor,
                 fontSize: 12,
@@ -119,7 +146,7 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
             icon: Icon(Icons.logout, color: _textColor),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.pushReplacementNamed(context, '/loginAdmin');
             },
           ),
         ],
@@ -169,12 +196,16 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                   },
                 ),
                 const SizedBox(height: 12),
-                // Filter chips
+                // Filter chips - Updated to include 'assigned'
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
                       _buildFilterChip('all', 'All Cases'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('assigned', 'My Cases'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('reported', 'Reported'),
                       const SizedBox(width: 8),
                       _buildFilterChip('open', 'Open'),
                       const SizedBox(width: 8),
@@ -210,6 +241,12 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                           'Error loading cases',
                           style: TextStyle(color: _textColor),
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          snapshot.error.toString(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: _secondaryTextColor, fontSize: 12),
+                        ),
                       ],
                     ),
                   );
@@ -224,21 +261,29 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                 final cases = snapshot.data?.docs ?? [];
                 final filteredCases = cases.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
-                  final status = (data['status'] ?? 'open').toString().toLowerCase();
+                  final status = (data['status'] ?? 'reported').toString().toLowerCase();
                   final caseNumber = (data['caseNumber'] ?? '').toString().toLowerCase();
                   final location = (data['location'] ?? '').toString().toLowerCase();
-                  final abuseType = (data['abuseType'] ?? '').toString().toLowerCase();
+                  final category = (data['category'] ?? '').toString().toLowerCase();
+                  final assignedTo = (data['assignedTo'] ?? '').toString();
 
                   // Apply status filter
-                  if (_selectedFilter != 'all' && status != _selectedFilter) {
-                    return false;
+                  if (_selectedFilter != 'all') {
+                    if (_selectedFilter == 'assigned') {
+                      // Show only cases assigned to current supporter
+                      if (assignedTo != _currentUserEmail) {
+                        return false;
+                      }
+                    } else if (status != _selectedFilter) {
+                      return false;
+                    }
                   }
 
                   // Apply search filter
                   if (_searchQuery.isNotEmpty) {
                     return caseNumber.contains(_searchQuery) ||
                         location.contains(_searchQuery) ||
-                        abuseType.contains(_searchQuery);
+                        category.contains(_searchQuery);
                   }
 
                   return true;
@@ -256,7 +301,9 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No cases found',
+                          _selectedFilter == 'assigned' 
+                            ? 'No assigned cases'
+                            : 'No cases found',
                           style: TextStyle(
                             color: _textColor,
                             fontSize: 18,
@@ -265,7 +312,9 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Try adjusting your filters',
+                          _selectedFilter == 'assigned'
+                            ? 'Cases assigned to you will appear here'
+                            : 'Try adjusting your filters',
                           style: TextStyle(
                             color: _secondaryTextColor,
                             fontSize: 14,
@@ -325,12 +374,14 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
   }
 
   Widget _buildCaseCard(String caseId, Map<String, dynamic> caseData) {
-    final status = (caseData['status'] ?? 'open').toString();
+    final status = (caseData['status'] ?? 'reported').toString();
     final caseNumber = caseData['caseNumber'] ?? 'N/A';
-    final abuseType = caseData['abuseType'] ?? 'Unknown';
+    final category = caseData['category'] ?? 'Unknown';
     final location = caseData['location'] ?? 'Unknown';
-    final reportedDate = caseData['timestamp'] != null
-        ? (caseData['timestamp'] as Timestamp).toDate()
+    final assignedTo = caseData['assignedTo'] ?? '';
+    final isAssignedToMe = assignedTo == _currentUserEmail;
+    final reportedDate = caseData['createdAt'] != null
+        ? (caseData['createdAt'] as Timestamp).toDate()
         : DateTime.now();
 
     return Container(
@@ -345,6 +396,9 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
             offset: const Offset(0, 4),
           ),
         ],
+        border: isAssignedToMe 
+            ? Border.all(color: _accentColor, width: 2)
+            : null,
       ),
       child: Column(
         children: [
@@ -384,29 +438,60 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        abuseType,
+                        category,
                         style: TextStyle(
                           color: _secondaryTextColor,
                           fontSize: 13,
                         ),
                       ),
+                      if (isAssignedToMe) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.person, size: 12, color: _accentColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Assigned to you',
+                              style: TextStyle(
+                                color: _accentColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(status),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    status.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(status),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        status.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (assignedTo.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Assigned',
+                        style: TextStyle(
+                          color: _secondaryTextColor,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -421,15 +506,35 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                   children: [
                     Icon(Icons.location_on_outlined, size: 16, color: _secondaryTextColor),
                     const SizedBox(width: 8),
-                    Text(
-                      location,
-                      style: TextStyle(color: _textColor, fontSize: 14),
+                    Expanded(
+                      child: Text(
+                        location,
+                        style: TextStyle(color: _textColor, fontSize: 14),
+                      ),
                     ),
                     const Spacer(),
                     Icon(Icons.calendar_today, size: 16, color: _secondaryTextColor),
                     const SizedBox(width: 8),
                     Text(
                       '${reportedDate.day}/${reportedDate.month}/${reportedDate.year}',
+                      style: TextStyle(color: _textColor, fontSize: 14),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.person, size: 16, color: _secondaryTextColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Victim: ${caseData['victimGender'] ?? 'Unknown'}',
+                      style: TextStyle(color: _textColor, fontSize: 14),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.person_off, size: 16, color: _secondaryTextColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Abuser: ${caseData['abuserGender'] ?? 'Unknown'}',
                       style: TextStyle(color: _textColor, fontSize: 14),
                     ),
                   ],
@@ -456,9 +561,9 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                       child: ElevatedButton.icon(
                         onPressed: () => _showUpdateStatusDialog(caseId, caseData),
                         icon: const Icon(Icons.edit, size: 16),
-                        label: const Text('Update'),
+                        label: Text(isAssignedToMe ? 'Update' : 'Assign'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _accentColor,
+                          backgroundColor: isAssignedToMe ? _accentColor : Colors.green,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -478,10 +583,15 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
   }
 
   Stream<QuerySnapshot> _getCasesStream() {
-    return FirebaseFirestore.instance
-        .collection('cases')
-        .orderBy('timestamp', descending: true)
-        .snapshots();
+    try {
+      return FirebaseFirestore.instance
+          .collection('cases')
+          .orderBy('createdAt', descending: true)
+          .snapshots();
+    } catch (e) {
+      debugPrint('Error creating cases stream: $e');
+      return const Stream<QuerySnapshot>.empty();
+    }
   }
 
   void _showCaseDetails(String caseId, Map<String, dynamic> caseData) {
@@ -493,7 +603,7 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
+        initialChildSize: 0.8,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
@@ -524,12 +634,17 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
               ),
               const SizedBox(height: 24),
               _buildDetailRow('Case Number', caseData['caseNumber'] ?? 'N/A'),
-              _buildDetailRow('Abuse Type', caseData['abuseType'] ?? 'Unknown'),
+              _buildDetailRow('Category', caseData['category'] ?? 'Unknown'),
               _buildDetailRow('Location', caseData['location'] ?? 'Unknown'),
               _buildDetailRow('Victim Gender', caseData['victimGender'] ?? 'Unknown'),
               _buildDetailRow('Abuser Gender', caseData['abuserGender'] ?? 'Unknown'),
               _buildDetailRow('Description', caseData['description'] ?? 'No description'),
-              _buildDetailRow('Status', caseData['status'] ?? 'open'),
+              _buildDetailRow('Status', caseData['status'] ?? 'reported'),
+              _buildDetailRow('From Date', _formatDate(caseData['fromDate'])),
+              _buildDetailRow('To Date', _formatDate(caseData['toDate'])),
+              _buildDetailRow('Reported By', caseData['reportedByEmail'] ?? 'Unknown'),
+              if (caseData['assignedTo'] != null && caseData['assignedTo'].toString().isNotEmpty) 
+                _buildDetailRow('Assigned To', caseData['assignedTo']),
               
               // Status History
               if (caseData['statusHistory'] != null) ...[
@@ -639,8 +754,10 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
   }
 
   void _showUpdateStatusDialog(String caseId, Map<String, dynamic> caseData) {
-    String selectedStatus = caseData['status'] ?? 'open';
+    String selectedStatus = caseData['status'] ?? 'reported';
     final TextEditingController noteController = TextEditingController();
+    final assignedTo = caseData['assignedTo'] ?? '';
+    final isAssignedToMe = assignedTo == _currentUserEmail;
 
     showDialog(
       context: context,
@@ -651,7 +768,7 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
-            'Update Case Status',
+            isAssignedToMe ? 'Update Case Status' : 'Assign Case',
             style: TextStyle(color: _textColor),
           ),
           content: SingleChildScrollView(
@@ -667,6 +784,27 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                
+                if (!isAssignedToMe) ...[
+                  Text(
+                    'Assign to yourself?',
+                    style: TextStyle(
+                      color: _textColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'By assigning this case, you will be responsible for handling it.',
+                    style: TextStyle(
+                      color: _secondaryTextColor,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
                 Text(
                   'Select Status',
                   style: TextStyle(
@@ -737,7 +875,9 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
                   style: TextStyle(color: _textColor),
                   maxLines: 4,
                   decoration: InputDecoration(
-                    hintText: 'Add details about the progress...',
+                    hintText: isAssignedToMe 
+                      ? 'Add details about the progress...'
+                      : 'Add initial notes about this case...',
                     hintStyle: TextStyle(color: _secondaryTextColor),
                     filled: true,
                     fillColor: _inputBackgroundColor,
@@ -769,20 +909,22 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
             ),
             ElevatedButton(
               onPressed: () async {
-                await _updateCaseStatus(
-                  caseId,
-                  selectedStatus,
-                  noteController.text.trim(),
-                );
+                if (!isAssignedToMe) {
+                  // Assign case to current supporter
+                  await _assignCaseToMe(caseId, selectedStatus, noteController.text.trim(), caseData);
+                } else {
+                  // Update case status
+                  await _updateCaseStatus(caseId, selectedStatus, noteController.text.trim(), caseData);
+                }
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _accentColor,
+                backgroundColor: isAssignedToMe ? _accentColor : Colors.green,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Update'),
+              child: Text(isAssignedToMe ? 'Update' : 'Assign & Update'),
             ),
           ],
         ),
@@ -790,59 +932,141 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
     );
   }
 
-  Future<void> _updateCaseStatus(String caseId, String newStatus, String note) async {
-    try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
+Future<void> _assignCaseToMe(String caseId, String newStatus, String note, Map<String, dynamic> caseData) async {
+  try {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
 
-      final statusUpdate = {
-        'status': newStatus,
-        'timestamp': FieldValue.serverTimestamp(),
-        'note': note,
-        'updatedBy': currentUser.email,
-      };
+   final statusUpdate = {
+  'status': newStatus,
+  'timestamp': Timestamp.now(), // ✅ fixed
+  'note': note.isNotEmpty ? note : 'Case assigned to supporter',
+  'updatedBy': currentUser.email,
+};
 
-      await FirebaseFirestore.instance.collection('cases').doc(caseId).update({
-        'status': newStatus,
-        'lastUpdated': FieldValue.serverTimestamp(),
-        'statusHistory': FieldValue.arrayUnion([statusUpdate]),
-      });
+    await FirebaseFirestore.instance.collection('cases').doc(caseId).update({
+      'status': newStatus,
+      'assignedTo': currentUser.email,
+      'lastUpdated': FieldValue.serverTimestamp(), // FIXED: Correct spelling
+      'statusHistory': FieldValue.arrayUnion([statusUpdate]),
+    });
 
-      // Send notification to case owner
-      final caseDoc = await FirebaseFirestore.instance.collection('cases').doc(caseId).get();
-      final caseData = caseDoc.data();
-      
-      if (caseData != null && caseData['userEmail'] != null) {
-        await FirebaseFirestore.instance.collection('notifications').add({
-          'title': 'Case Status Updated',
-          'message': 'Your case #${caseData['caseNumber']} status changed to: $newStatus',
-          'type': 'status_update',
-          'caseId': caseId,
-          'reportedBy': caseData['userEmail'],
-          'timestamp': FieldValue.serverTimestamp(),
-          'read': false,
-        });
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Case status updated successfully'),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error updating status: $e'),
-          backgroundColor: const Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
+    // Send notification to case owner
+    final reportedByEmail = caseData['reportedByEmail'];
+    if (reportedByEmail != null) {
+      await _sendNotification(
+        caseId: caseId,
+        caseNumber: caseData['caseNumber'] ?? 'Unknown',
+        newStatus: newStatus,
+        reportedByEmail: reportedByEmail,
+        isAssignment: true,
+        assignedTo: currentUser.email,
       );
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Case assigned to you successfully'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  } catch (e) {
+    debugPrint('Error assigning case: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error assigning case: $e'),
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
+}
+
+Future<void> _updateCaseStatus(String caseId, String newStatus, String note, Map<String, dynamic> caseData) async {
+  try {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final statusUpdate = {
+      'status': newStatus,
+      'timestamp': FieldValue.serverTimestamp(), // FIXED: Correct spelling
+      'note': note,
+      'updatedBy': currentUser.email,
+    };
+
+    await FirebaseFirestore.instance.collection('cases').doc(caseId).update({
+      'status': newStatus,
+      'lastUpdated': FieldValue.serverTimestamp(), // FIXED: Correct spelling
+      'statusHistory': FieldValue.arrayUnion([statusUpdate]),
+    });
+
+    // Send notification to case owner
+    final reportedByEmail = caseData['reportedByEmail'];
+    if (reportedByEmail != null) {
+      await _sendNotification(
+        caseId: caseId,
+        caseNumber: caseData['caseNumber'] ?? 'Unknown',
+        newStatus: newStatus,
+        reportedByEmail: reportedByEmail,
+        isAssignment: false,
+      );
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Case status updated successfully'),
+        backgroundColor: const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  } catch (e) {
+    debugPrint('Error updating status: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error updating status: $e'),
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+}
+Future<void> _sendNotification({
+  required String caseId,
+  required String caseNumber,
+  required String newStatus,
+  required String reportedByEmail,
+  bool isAssignment = false,
+  String? assignedTo,
+}) async {
+  try {
+    String title, message;
+
+    if (isAssignment) {
+      title = 'Case Assigned';
+      message = 'Your case #$caseNumber has been assigned to $assignedTo and status changed to: $newStatus';
+    } else {
+      title = 'Case Status Updated';
+      message = 'Your case #$caseNumber status has been changed to: $newStatus';
+    }
+
+    await FirebaseFirestore.instance.collection('notifications').add({
+      'title': title,
+      'message': message,
+      'type': 'status_update',
+      'caseId': caseId,
+      'reportedBy': reportedByEmail,
+      'timestamp': FieldValue.serverTimestamp(), // FIXED: Correct spelling
+      'read': false,
+    });
+  } catch (e) {
+    debugPrint('Error sending notification: $e');
+  }
+}
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return 'Just now';
@@ -863,5 +1087,22 @@ class _SupporterDashboardState extends State<SupporterDashboard> {
     } catch (e) {
       return 'Just now';
     }
+  }
+
+  String _formatDate(dynamic date) {
+    if (date == null) return 'Not specified';
+    if (date is Timestamp) {
+      final d = date.toDate();
+      return "${d.day}/${d.month}/${d.year}";
+    }
+    if (date is String) {
+      try {
+        final d = DateTime.parse(date);
+        return "${d.day}/${d.month}/${d.year}";
+      } catch (e) {
+        return date;
+      }
+    }
+    return date.toString();
   }
 }
