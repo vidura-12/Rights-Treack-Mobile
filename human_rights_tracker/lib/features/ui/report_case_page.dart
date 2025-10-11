@@ -691,7 +691,7 @@ class _ReportCasePageState extends State<ReportCasePage> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           isExpanded: true, // Critical for preventing overflow
           items: items
               .map(
