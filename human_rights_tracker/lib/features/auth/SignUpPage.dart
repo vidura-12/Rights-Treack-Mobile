@@ -179,7 +179,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'Talkam',
+                        'RightsTracker',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 32,
