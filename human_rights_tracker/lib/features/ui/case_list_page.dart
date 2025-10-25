@@ -988,7 +988,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
               ),
               child: DropdownButtonFormField<String>(
                 isExpanded: true,
-                value: genders.contains(selectedVictim) ? selectedVictim : null,
+                initialValue: genders.contains(selectedVictim) ? selectedVictim : null,
                 hint: Text(
                   "Select Victim Gender",
                   style: TextStyle(color: _secondaryTextColor),
@@ -1068,7 +1068,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                           border: Border.all(color: _borderColor),
                         ),
                         child: DropdownButtonFormField<String>(
-                          value: genders.contains(selectedVictim)
+                          initialValue: genders.contains(selectedVictim)
                               ? selectedVictim
                               : null,
                           hint: Text(
@@ -1123,7 +1123,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                           border: Border.all(color: _borderColor),
                         ),
                         child: DropdownButtonFormField<String>(
-                          value: genders.contains(selectedAbuser)
+                          initialValue: genders.contains(selectedAbuser)
                               ? selectedAbuser
                               : null,
                           hint: Text(
@@ -1178,7 +1178,7 @@ class _CaseDetailsPageState extends State<CaseDetailsPage> {
                 border: Border.all(color: _borderColor),
               ),
               child: DropdownButtonFormField<String>(
-                value: statuses.contains(selectedStatus)
+                initialValue: statuses.contains(selectedStatus)
                     ? selectedStatus
                     : null,
                 hint: Text(

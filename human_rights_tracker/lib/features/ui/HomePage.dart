@@ -193,7 +193,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'RightsTrack',
+                    'RightsTracker',
                     style: TextStyle(
                       color: _textColor,
                       fontSize: 20,

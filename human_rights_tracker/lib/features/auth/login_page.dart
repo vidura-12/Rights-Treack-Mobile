@@ -61,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'RightsTrack',
+                        'RightsTracker',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 32,
